@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InteriorAI Pro
+
+AI-powered interior and exterior design platform built with Next.js, Drizzle ORM, and modern web technologies.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Database**: Neon.tech PostgreSQL with Drizzle ORM
+- **Authentication**: BetterAuth with Google OAuth
+- **API**: tRPC for type-safe APIs
+- **UI**: Shadcn UI components with Tailwind CSS
+- **State Management**: Tanstack Query
+- **Deployment**: Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+ 
+- npm or yarn
+- Neon.tech database account
+- Google OAuth credentials
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Fill in your actual values in `.env.local`
+
+4. Set up the database:
+   ```bash
+   npm run db:push
+   ```
+
+5. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Neon.tech PostgreSQL connection string |
+| `BETTER_AUTH_SECRET` | Secret key for BetterAuth |
+| `BETTER_AUTH_URL` | Your app URL (http://localhost:3000 for dev) |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+
+## Database Commands
+
+- `npm run db:generate` - Generate migrations
+- `npm run db:migrate` - Run migrations
+- `npm run db:push` - Push schema changes to database
+- `npm run db:studio` - Open Drizzle Studio
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+├── components/            # React components
+│   └── ui/               # Shadcn UI components
+├── lib/                  # Core libraries
+│   ├── db/              # Database schema and config
+│   ├── server/          # tRPC server setup
+│   ├── auth.ts          # BetterAuth configuration
+│   └── trpc.ts          # tRPC client setup
+├── providers/           # Context providers
+└── hooks/              # Custom React hooks
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development Guidelines
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Code Style
+- Use TypeScript for all new files
+- Follow the existing component patterns
+- Use the provided ESLint configuration
+- Run `npm run lint` before committing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Component Structure
+- Use functional components with TypeScript
+- Follow Shadcn UI patterns for consistency
+- Implement proper loading and error states
+- Ensure responsive design
 
-## Learn More
+### Database Changes
+- Always use Drizzle migrations
+- Test database changes locally first
+- Update the schema documentation
 
-To learn more about Next.js, take a look at the following resources:
+## Available Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run db:*` - Database commands (see above)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Contributing
 
-## Deploy on Vercel
+1. Create a feature branch from `main`
+2. Make your changes
+3. Test thoroughly
+4. Create a pull request
+5. Ensure CI checks pass
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Next Steps
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Phase 1 is complete! You can now:
+1. Set up your Neon.tech database and update DATABASE_URL
+2. Configure Google OAuth credentials
+3. Run `npm run db:push` to create the database schema
+4. Start building Phase 2 features (Dashboard)
