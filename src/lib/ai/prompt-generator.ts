@@ -29,7 +29,10 @@ Guidelines:
 - Include details about materials, finishes, and decorative elements
 - Aim for photorealistic, professionally designed spaces
 - Keep prompts between 100-200 words
-- Avoid mentioning people, text, or watermarks`;
+- Avoid mentioning people, text, or watermarks
+- Always include quality keywords: "8K quality", "photorealistic", "ultra-detailed", "sharp focus", "professional photography"
+- Emphasize lighting, textures, and materials for better visual quality
+- Include specific design elements that match the chosen style`;
 
       const userPrompt = `Create a detailed prompt for generating a ${input.designStyle} style ${input.roomType.replace('-', ' ')} interior design image. 
       

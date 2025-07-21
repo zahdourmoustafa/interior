@@ -63,11 +63,15 @@ export class ReplicateService {
           prompt:
             input.prompt ||
             this.generateDefaultPrompt(input.roomType, input.designStyle),
-          guidance_scale: 15,
+          guidance_scale: 12, // Increased from 15 for better quality
           negative_prompt:
-            "lowres, watermark, banner, logo, watermark, contactinfo, text, deformed, blurry, blur, out of focus, out of frame, surreal, extra, ugly, upholstered walls, fabric walls, plush walls, mirror, mirrored, functional, realistic, poor quality, distorted",
-          prompt_strength: 0.8,
-          num_inference_steps: 50,
+            "lowres, watermark, banner, logo, watermark, contactinfo, text, deformed, blurry, blur, out of focus, out of frame, surreal, extra, ugly, upholstered walls, fabric walls, plush walls, mirror, mirrored, functional, realistic, poor quality, distorted, low quality, pixelated, noise, artifacts, compression artifacts, jpeg artifacts, blur, soft, unfocused, hazy, low resolution, grainy, noisy, text, writing, watermark, logo, oversaturation, over saturation, over shadow",
+          prompt_strength: 0.85, // Increased from 0.8 for stronger style application
+          num_inference_steps: 75, // Increased from 50 for higher quality
+          width: 1024, // Set explicit width for higher resolution
+          height: 1024, // Set explicit height for higher resolution
+          scheduler: "DPMSolverMultistep", // Better scheduler for quality
+          seed: Math.floor(Math.random() * 1000000), // Random seed for variety
         },
       })) as unknown;
 
@@ -157,7 +161,7 @@ export class ReplicateService {
     const styleDesc =
       stylePrompts[designStyle as keyof typeof stylePrompts] || "modern style";
 
-    return `A beautifully designed ${roomDesc} featuring ${styleDesc}. The space should be well-lit with natural light, professionally photographed, high-resolution, and showcase excellent interior design principles with attention to color harmony, furniture placement, and overall aesthetic appeal.`;
+    return `A beautifully designed ${roomDesc} featuring ${styleDesc}. The space should be well-lit with natural light, professionally photographed, high-resolution, 8K quality, photorealistic, detailed textures, perfect lighting, and showcase excellent interior design principles with attention to color harmony, furniture placement, and overall aesthetic appeal. Ultra-detailed, sharp focus, professional interior photography.`;
   }
 
   static async uploadImageToBlob(file: File): Promise<string> {

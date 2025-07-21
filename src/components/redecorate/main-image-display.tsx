@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Heart, Download, Maximize2, RotateCcw, Split } from 'lucide-react';
+import { Upload, Heart, Download, Maximize2, RotateCcw, Split, X } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { ImageComparisonSlider } from './image-comparison-slider';
@@ -13,13 +13,15 @@ interface MainImageDisplayProps {
   generatedImage: string | null;
   isGenerating: boolean;
   onImageUpload: (file: File) => void;
+  onImageRemove?: () => void;
 }
 
 export function MainImageDisplay({ 
   selectedImage, 
   generatedImage, 
   isGenerating,
-  onImageUpload 
+  onImageUpload,
+  onImageRemove 
 }: MainImageDisplayProps) {
   const [dragActive, setDragActive] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
@@ -54,6 +56,13 @@ export function MainImageDisplay({
     if (selectedImage && generatedImage) {
       setShowComparison(!showComparison);
     }
+  };
+
+  const handleRemoveImage = () => {
+    if (onImageRemove) {
+      onImageRemove();
+    }
+    setShowComparison(false);
   };
 
   const displayImage = generatedImage || selectedImage;
@@ -102,6 +111,16 @@ export function MainImageDisplay({
                 <Maximize2 className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Delete Button */}
+            <Button 
+              size="icon" 
+              variant="destructive" 
+              className="absolute top-4 left-4 bg-red-500/90 hover:bg-red-600 text-white"
+              onClick={handleRemoveImage}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         ) : (
           <Card

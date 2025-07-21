@@ -61,7 +61,11 @@ export default function RedecorateRoomPage() {
     setSelectedRoomType(roomType);
   };
 
-
+  const handleImageRemove = () => {
+    setSelectedImage(null);
+    setGeneratedImage(null);
+    toast.success('Image removed. You can upload a new image.');
+  };
 
   // tRPC mutation for image generation
   const generateMutation = trpc.images.generateRedecorate.useMutation({
@@ -113,7 +117,7 @@ export default function RedecorateRoomPage() {
     // Call tRPC mutation for image generation
     generateMutation.mutate({
       originalImageUrl: selectedImage,
-      roomType: selectedRoomType as any, // Type assertion for enum
+      roomType: selectedRoomType as "living-room" | "kitchen" | "bedroom" | "kids-room" | "dining-room" | "home-office" | "game-room" | "bath-room",
       designStyle: selectedStyle,
     });
   };
@@ -134,6 +138,7 @@ export default function RedecorateRoomPage() {
             generatedImage={generatedImage}
             isGenerating={isGenerating}
             onImageUpload={handleImageUpload}
+            onImageRemove={handleImageRemove}
           />
         </div>
         
