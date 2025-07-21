@@ -5,36 +5,52 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 const features = [
   {
-    title: 'Redecorate Room',
-    description: 'Transform your existing rooms with AI-powered design',
-    icon: <Palette className="h-6 w-6 text-white" />,
+    title: 'Redecoration AI',
+    description: 'Reimagine interiors with fresh color schemes, layouts, and styles powered by AI.',
+    icon: <Palette className="h-6 w-6" />,
     href: '/dashboard/redecorate-room',
-    color: 'bg-blue-500',
-    gradient: 'from-blue-500 to-blue-600',
+    backgroundImage: '/modern.webp',
+    features: ['Style Transfer', 'Texture Synthesis', 'Color Harmonization'],
   },
   {
-    title: 'From Sketch to Reality',
-    description: 'Convert hand-drawn sketches into realistic renders',
-    icon: <ImageIcon className="h-6 w-6 text-white" />,
+    title: 'Moodboard AI',
+    description: 'Upload a moodboard and your room photo to instantly harmonize colors—preview, tweak with a slider, and download.',
+    icon: <ImageIcon className="h-6 w-6" />,
     href: '/dashboard/sketch-to-reality',
-    color: 'bg-green-500',
-    gradient: 'from-green-500 to-green-600',
+    backgroundImage: '/professional.webp',
+    features: ['Dynamic Lighting', 'Time-of-day Shades', 'colors—preview'],
   },
   {
-    title: 'Generate Videos',
-    description: 'Create immersive video walkthroughs of your designs',
-    icon: <Video className="h-6 w-6 text-white" />,
-    href: '/dashboard/generate-videos',
-    color: 'bg-purple-500',
-    gradient: 'from-purple-500 to-purple-600',
-  },
-  {
-    title: 'Redesign Exterior',
-    description: 'Transform exterior spaces with architectural visualization',
-    icon: <Home className="h-6 w-6 text-white" />,
+    title: 'Staging Master AI',
+    description: 'Stage properties virtually for real estate marketing with AI-driven furniture placement.',
+    icon: <Home className="h-6 w-6" />,
     href: '/dashboard/redesign-exterior',
-    color: 'bg-orange-500',
-    gradient: 'from-orange-500 to-orange-600',
+    backgroundImage: '/neoclassic.webp',
+    features: ['3D Generation', 'Structural Analysis', 'Form Optimization'],
+  },
+  {
+    title: 'Sketch AI',
+    description: 'Transform rough sketches into refined architectural designs using advanced AI.',
+    icon: <Video className="h-6 w-6" />,
+    href: '/dashboard/generate-videos',
+    backgroundImage: '/summer.webp',
+    features: ['Plant Selection', 'Terrain Modeling', 'Water Features'],
+  },
+  {
+    title: 'Design from Text AI',
+    description: 'Generate entire designs from text prompts in seconds using cutting-edge AI.',
+    icon: <ImageIcon className="h-6 w-6" />,
+    href: '/dashboard/sketch-to-reality',
+    backgroundImage: '/coastal.webp',
+    features: ['4K Resolution', 'Lighting Enhancement', 'Material Optimization'],
+  },
+  {
+    title: 'Product Staging',
+    description: 'Visualize furniture arrangements in real time with photorealistic AI rendering.',
+    icon: <Home className="h-6 w-6" />,
+    href: '/dashboard/redesign-exterior',
+    backgroundImage: '/vintage.webp',
+    features: ['Texture Generation', 'PBR Materials', 'Custom Patterns'],
   },
 ];
 
@@ -50,7 +66,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
               <FeatureCard
                 key={feature.title}
@@ -58,8 +74,8 @@ export default function DashboardPage() {
                 description={feature.description}
                 icon={feature.icon}
                 href={feature.href}
-                color={feature.color}
-                gradient={feature.gradient}
+                backgroundImage={feature.backgroundImage}
+                features={feature.features}
               />
             ))}
           </div>

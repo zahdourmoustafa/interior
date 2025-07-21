@@ -1,9 +1,11 @@
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
 import { db } from '../db';
-import { images, favorites } from '../db/schema';
+import { images, favorites, users } from '../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { validateImageFile } from './upload';
+import { ReplicateService } from '../ai/replicate-service';
+import { PromptGenerator } from '../ai/prompt-generator';
 import type { User } from '../db/schema';
 
 const t = initTRPC.create();
@@ -13,11 +15,29 @@ export const publicProcedure = t.procedure;
 
 const authedProcedure = t.procedure.use(async (opts) => {
   const { ctx } = opts;
-  // Add authentication check here when auth context is ready
+  // For now, create a mock user for development
+  // TODO: Replace with actual authentication check
+  const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+  
+  // Check if mock user exists, if not create it
+  let mockUser = await db.select().from(users).where(eq(users.id, mockUserId)).limit(1);
+  
+  if (mockUser.length === 0) {
+    console.log('🔧 Creating mock user for development...');
+    const newUser = await db.insert(users).values({
+      id: mockUserId,
+      email: 'dev-user@interiorai.com',
+      name: 'Development User',
+      emailVerified: true,
+      image: null,
+    }).returning();
+    mockUser = newUser;
+  }
+  
   return opts.next({
     ctx: {
       ...ctx,
-      user: null as User | null, // Will be populated with actual user
+      user: mockUser[0],
     },
   });
 });
@@ -65,15 +85,69 @@ export const appRouter = router({
     generateRedecorate: authedProcedure
       .input(z.object({
         originalImageUrl: z.string(),
-        roomType: z.enum(['bedroom', 'livingroom', 'bathroom', 'kitchen', 'diningroom']),
-        styles: z.array(z.string()),
+        roomType: z.enum(['living-room', 'kitchen', 'bedroom', 'kids-room', 'dining-room', 'home-office', 'game-room', 'bath-room']),
+        designStyle: z.string(),
       }))
-      .mutation(async () => {
-        // Placeholder for AI generation logic
-        return {
-          jobId: 'placeholder-job-id',
-          generatedImageUrls: [],
-        };
+      .mutation(async ({ input, ctx }) => {
+        try {
+          console.log('🎨 Starting redecoration generation:', input);
+
+          // Generate dynamic prompt using OpenAI
+          const dynamicPrompt = await PromptGenerator.generateDynamicPrompt({
+            roomType: input.roomType,
+            designStyle: input.designStyle,
+          });
+
+          // Generate image using Replicate
+          const result = await ReplicateService.generateInteriorDesign({
+            imageUrl: input.originalImageUrl,
+            roomType: input.roomType,
+            designStyle: input.designStyle,
+            prompt: dynamicPrompt,
+          });
+
+          // Store in database if successful
+          if (result.status === 'completed' && result.imageUrl && ctx.user) {
+            const imageRecord = await db.insert(images).values({
+              userId: ctx.user.id,
+              originalImageUrl: input.originalImageUrl,
+              generatedImageUrl: result.imageUrl,
+              roomType: input.roomType,
+              style: input.designStyle,
+              aiPromptUsed: dynamicPrompt,
+              resolution: '4K',
+            }).returning();
+
+            console.log('✅ Image saved to database:', imageRecord[0]?.id);
+          }
+
+          return {
+            jobId: result.jobId,
+            generatedImageUrl: result.imageUrl,
+            status: result.status,
+            error: result.error,
+            prompt: dynamicPrompt,
+          };
+
+        } catch (error) {
+          console.error('❌ Generation failed:', error);
+          throw new Error(error instanceof Error ? error.message : 'Generation failed');
+        }
+      }),
+
+    uploadImage: authedProcedure
+      .input(z.object({
+        file: z.any(), // File object
+        filename: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const imageUrl = await ReplicateService.uploadImageToBlob(input.file);
+          return { imageUrl };
+        } catch (error) {
+          console.error('❌ Upload failed:', error);
+          throw new Error('Failed to upload image');
+        }
       }),
 
     generateVideo: authedProcedure

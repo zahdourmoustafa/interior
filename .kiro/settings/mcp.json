@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "neon": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "neon",
+        "--key",
+        "3da31457-22b1-485f-a1a7-13c4d374e9c4",
+        "--profile",
+        "medical-zebra-oyqUlu"
+      ]
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "env": {},
+      "disabled": true,
+      "autoApprove": []
+    }
+  }
+}
