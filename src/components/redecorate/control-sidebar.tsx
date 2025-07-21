@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -153,20 +154,35 @@ const roomTypes = [
 ];
 
 interface ControlSidebarProps {
-  selectedRoomType: string | null;
-  onRoomTypeSelect: (roomType: string) => void;
+  title?: string;
+  description?: string;
+  selectedRoomType?: string | null;
+  onRoomTypeSelect?: (roomType: string) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  showRoomType?: boolean;
+  showDesignStyle?: boolean;
+  prompt?: string;
+  onPromptChange?: (prompt: string) => void;
+  promptPlaceholder?: string;
 }
 
 export function ControlSidebar({
+  title = "Room Type",
+  description = "Select the room type for your design",
   selectedRoomType,
   onRoomTypeSelect,
   onGenerate,
   isGenerating,
+  showRoomType = true,
+  showDesignStyle = true,
+  prompt,
+  onPromptChange,
+  promptPlaceholder = "Describe your design...",
 }: ControlSidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
     roomType: true,
+    prompt: true,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -199,52 +215,88 @@ export function ControlSidebar({
         </div>
       </div>
 
-      {/* Room Type Section */}
-      <div className="border-b">
-        <button
-          onClick={() => toggleSection("roomType")}
-          className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50"
-        >
-          <span className="font-medium text-gray-900">Room Type</span>
-          {expandedSections.roomType ? (
-            <ChevronDown className="h-4 w-4 text-gray-500" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-gray-500" />
-          )}
-        </button>
-
-        {expandedSections.roomType && (
-          <div className="px-4 pb-4">
-            <div className="grid grid-cols-4 gap-2">
-              {roomTypes.map((room) => (
-                <button
-                  key={room.id}
-                  onClick={() => onRoomTypeSelect(room.id)}
-                  className={cn(
-                    "p-3 rounded-lg border-2 text-center transition-all duration-200",
-                    selectedRoomType === room.id
-                      ? "border-orange-500 bg-orange-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  )}
-                >
-                  <div className="mb-1 flex justify-center">
-                    <room.icon />
-                  </div>
-                  <div className="text-xs text-gray-700 leading-tight">
-                    {room.name}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Title and Description */}
+      <div className="p-4 border-b">
+        <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
+        <p className="text-sm text-gray-600">{description}</p>
       </div>
+
+      {/* Prompt Input Section */}
+      {prompt !== undefined && onPromptChange && (
+        <div className="border-b">
+          <button
+            onClick={() => toggleSection("prompt")}
+            className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50"
+          >
+            <span className="font-medium text-gray-900">Description</span>
+            {expandedSections.prompt ? (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-gray-500" />
+            )}
+          </button>
+
+          {expandedSections.prompt && (
+            <div className="px-4 pb-4">
+              <Textarea
+                value={prompt}
+                onChange={(e) => onPromptChange(e.target.value)}
+                placeholder={promptPlaceholder}
+                className="min-h-[120px] resize-none"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Room Type Section */}
+      {showRoomType && selectedRoomType !== undefined && onRoomTypeSelect && (
+        <div className="border-b">
+          <button
+            onClick={() => toggleSection("roomType")}
+            className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50"
+          >
+            <span className="font-medium text-gray-900">Room Type</span>
+            {expandedSections.roomType ? (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-gray-500" />
+            )}
+          </button>
+
+          {expandedSections.roomType && (
+            <div className="px-4 pb-4">
+              <div className="grid grid-cols-4 gap-2">
+                {roomTypes.map((room) => (
+                  <button
+                    key={room.id}
+                    onClick={() => onRoomTypeSelect(room.id)}
+                    className={cn(
+                      "p-3 rounded-lg border-2 text-center transition-all duration-200",
+                      selectedRoomType === room.id
+                        ? "border-orange-500 bg-orange-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    )}
+                  >
+                    <div className="mb-1 flex justify-center">
+                      <room.icon />
+                    </div>
+                    <div className="text-xs text-gray-700 leading-tight">
+                      {room.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Generate Button */}
       <div className="mt-auto p-4">
         <Button
           onClick={onGenerate}
-          disabled={isGenerating || !selectedRoomType}
+          disabled={isGenerating || (showRoomType && !selectedRoomType) || (prompt !== undefined && !prompt?.trim())}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 text-lg font-medium"
         >
           {isGenerating ? "Generating..." : "Generate"}

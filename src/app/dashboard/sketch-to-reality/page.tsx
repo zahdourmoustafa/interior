@@ -150,9 +150,13 @@ export default function SketchToRealityPage() {
         {/* Right Sidebar - Controls */}
         <ControlSidebar
           selectedRoomType={selectedRoomType}
-          onRoomTypeSelect={handleRoomTypeSelect}
+          onRoomTypeSelect={setSelectedRoomType}
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
+          title="Room Type"
+          description="Select the room type for your sketch"
+          showRoomType={true}
+          showDesignStyle={false}
         />
       </div>
       

@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { DashboardHeader } from './dashboard-header';
 import { Sidebar } from './sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -17,7 +16,6 @@ export function DashboardLayout({ children, useContainer = true }: DashboardLayo
     <div className="flex h-screen bg-background">
       {!isMobile && <Sidebar />}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader />
         <main className="flex-1 overflow-y-auto">
           {useContainer ? (
             <div className="container mx-auto px-4 py-8 max-w-7xl">

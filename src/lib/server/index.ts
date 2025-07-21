@@ -188,6 +188,50 @@ export const appRouter = router({
         }
       }),
 
+    generateTextToDesign: authedProcedure
+      .input(z.object({
+        prompt: z.string(),
+        aspectRatio: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          console.log('🎨 Starting text-to-design generation:', input);
+
+          // Generate image using Replicate with Imagen-4-Fast model
+          const result = await ReplicateService.generateTextToDesign({
+            prompt: input.prompt,
+            aspectRatio: input.aspectRatio || "1:1",
+          });
+
+          // Store in database if successful
+          if (result.status === 'completed' && result.imageUrl && ctx.user) {
+            const imageRecord = await db.insert(images).values({
+              userId: ctx.user.id,
+              originalImageUrl: '', // No original image for text-to-design
+              generatedImageUrl: result.imageUrl,
+              roomType: 'text-to-design',
+              style: 'custom',
+              aiPromptUsed: input.prompt,
+              resolution: '4K',
+            }).returning();
+
+            console.log('✅ Text-to-design image saved to database:', imageRecord[0]?.id);
+          }
+
+          return {
+            jobId: result.jobId,
+            generatedImageUrl: result.imageUrl,
+            status: result.status,
+            error: result.error,
+            prompt: input.prompt,
+          };
+
+        } catch (error) {
+          console.error('❌ Text-to-design generation failed:', error);
+          throw new Error(error instanceof Error ? error.message : 'Text-to-design generation failed');
+        }
+      }),
+
     uploadImage: authedProcedure
       .input(z.object({
         file: z.any(), // File object

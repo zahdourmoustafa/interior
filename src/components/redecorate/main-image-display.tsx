@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Upload, Heart, Download, Maximize2, RotateCcw, Split, X } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { ImageComparisonSlider } from './image-comparison-slider';
+import { toast } from 'sonner';
 
 interface MainImageDisplayProps {
   selectedImage: string | null;
@@ -19,6 +21,8 @@ interface MainImageDisplayProps {
     description: string;
     placeholder: string;
   };
+  showCompareButton?: boolean;
+  showUploadArea?: boolean;
 }
 
 export function MainImageDisplay({ 
@@ -27,10 +31,13 @@ export function MainImageDisplay({
   isGenerating,
   onImageUpload,
   onImageRemove,
-  uploadText 
+  uploadText,
+  showCompareButton = true,
+  showUploadArea = true
 }: MainImageDisplayProps) {
   const [dragActive, setDragActive] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -69,6 +76,36 @@ export function MainImageDisplay({
       onImageRemove();
     }
     setShowComparison(false);
+  };
+
+  const handleLike = () => {
+    toast.success("Added to favorites!");
+  };
+
+  const handleDownload = async () => {
+    if (!displayImage) return;
+    
+    try {
+      const response = await fetch(displayImage);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `interior-design-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Image downloaded successfully!");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download image");
+    }
+  };
+
+  const handleExpand = () => {
+    if (!displayImage) return;
+    setShowImageModal(true);
   };
 
   const displayImage = generatedImage || selectedImage;
@@ -116,13 +153,13 @@ export function MainImageDisplay({
 
             {/* Action Buttons */}
             <div className="absolute top-4 right-4 flex space-x-2">
-              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white">
+              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white" onClick={handleLike}>
                 <Heart className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white">
+              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white" onClick={handleDownload}>
                 <Download className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white">
+              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white" onClick={handleExpand}>
                 <Maximize2 className="h-4 w-4" />
               </Button>
             </div>
@@ -138,71 +175,67 @@ export function MainImageDisplay({
             </Button>
           </div>
         ) : (
-          <Card
-            className={cn(
-              "w-full h-full border-2 border-dashed transition-colors duration-200 flex items-center justify-center cursor-pointer",
-              dragActive ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-gray-400"
-            )}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById('file-upload')?.click()}
-          >
-            <div className="text-center p-8">
-              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {finalUploadText.title}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {finalUploadText.description}
-              </p>
-              <p className="text-sm text-gray-400">
-                {finalUploadText.placeholder}
-              </p>
-            </div>
-            <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileInput}
-            />
-          </Card>
+          showUploadArea && (
+            <Card
+              className={cn(
+                "w-full h-full border-2 border-dashed transition-colors duration-200 flex items-center justify-center cursor-pointer",
+                dragActive ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-gray-400"
+              )}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('file-upload')?.click()}
+            >
+              <div className="text-center p-8">
+                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {finalUploadText.title}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {finalUploadText.description}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {finalUploadText.placeholder}
+                </p>
+              </div>
+              <input
+                id="file-upload"
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileInput}
+              />
+            </Card>
+          )
         )}
       </div>
 
-      {/* Bottom Controls */}
-      <div className="flex items-center justify-center space-x-4 mt-4 p-4 bg-black rounded-lg">
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-          History
-        </Button>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-          Retouch
-        </Button>
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-          <div className="w-6 h-6 bg-black rounded-full"></div>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className={cn(
-            "text-white hover:bg-white/10",
-            showComparison && "bg-white/20 text-white"
-          )}
-          onClick={handleBeforeAfterToggle}
-          disabled={!canShowComparison}
-        >
-          <Split className="h-4 w-4 mr-1" />
-          Before/After
-        </Button>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-          Upload
-        </Button>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-          Upscale
-        </Button>
-      </div>
+      {/* Image Modal */}
+      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
+        <DialogContent className="max-w-[98vw] max-h-[98vh] w-[1600px] h-[1000px] p-0 overflow-hidden border-0">
+          <DialogTitle className="sr-only">Full size image</DialogTitle>
+          <div className="relative w-full h-full bg-black">
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white"
+              onClick={() => setShowImageModal(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            {displayImage && (
+              <Image
+                src={displayImage}
+                alt="Full size image"
+                fill
+                className="object-contain"
+                sizes="(max-width: 1600px) 98vw, 1600px"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

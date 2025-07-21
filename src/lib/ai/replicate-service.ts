@@ -49,6 +49,9 @@ export class ReplicateService {
   private static readonly SKETCH_TO_REALITY_MODEL_ID =
     "adirik/interior-design:76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38";
 
+  private static readonly IMAGEN_4_FAST_MODEL_ID =
+    "google/imagen-4-fast";
+
   static async generateInteriorDesign(
     input: GenerateImageInput
   ): Promise<GenerateImageOutput> {
@@ -183,6 +186,65 @@ export class ReplicateService {
       console.error("❌ Sketch-to-reality generation failed:", error);
       return {
         jobId: `sketch_failed_${Date.now()}`,
+        status: "failed",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
+  static async generateTextToDesign(
+    input: { prompt: string; aspectRatio?: string }
+  ): Promise<GenerateImageOutput> {
+    try {
+      console.log("🎨 Starting text-to-design generation:", {
+        prompt: input.prompt.substring(0, 100) + "...",
+        aspectRatio: input.aspectRatio || "1:1",
+      });
+
+      const replicateClient = getReplicate();
+      const output = (await replicateClient.run(this.IMAGEN_4_FAST_MODEL_ID, {
+        input: {
+          prompt: input.prompt,
+          aspect_ratio: input.aspectRatio || "1:1",
+        },
+      })) as unknown;
+
+      // Handle the output - it could be a URL string, array, or URL object
+      let imageUrl: string;
+      
+      if (typeof output === "string") {
+        imageUrl = output;
+      } else if (Array.isArray(output) && output.length > 0) {
+        imageUrl = output[0];
+      } else if (output && typeof output === "object") {
+        // Handle URL object from Replicate
+        const outputObj = output as Record<string, unknown>;
+        if ("href" in outputObj && typeof outputObj.href === "string") {
+          imageUrl = outputObj.href;
+        } else if ("url" in outputObj) {
+          const urlValue = outputObj.url;
+          imageUrl =
+            typeof urlValue === "function" ? urlValue() : String(urlValue);
+        } else {
+          // Try to convert to string
+          imageUrl = String(output);
+        }
+      } else {
+        throw new Error("Unexpected output format from Replicate");
+      }
+
+      console.log("✅ Text-to-design generation completed:", imageUrl);
+
+      return {
+        jobId: `text_design_replicate_${Date.now()}`,
+        imageUrl,
+        status: "completed",
+      };
+    } catch (error) {
+      console.error("❌ Text-to-design generation failed:", error);
+      return {
+        jobId: `text_design_failed_${Date.now()}`,
         status: "failed",
         error:
           error instanceof Error ? error.message : "Unknown error occurred",

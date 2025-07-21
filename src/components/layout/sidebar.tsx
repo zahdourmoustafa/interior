@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, Palette, Image, Video, Settings, ChevronRight } from 'lucide-react';
+import { Home, Palette, Image, Video, Settings, ChevronRight, Type, User, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Redecorate Room', href: '/dashboard/redecorate-room', icon: Palette },
   { name: 'Sketch to Reality', href: '/dashboard/sketch-to-reality', icon: Image },
+  { name: 'Text to Design', href: '/dashboard/text-to-design', icon: Type },
   { name: 'Generate Videos', href: '/dashboard/generate-videos', icon: Video },
   { name: 'Saved Videos', href: '/dashboard/saved-videos', icon: Video },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
@@ -88,10 +91,43 @@ export function Sidebar({ className }: SidebarProps) {
           "transition-all duration-300",
           isExpanded ? "opacity-100" : "opacity-0"
         )}>
-          <p className="text-xs text-muted-foreground whitespace-nowrap">
+          <p className="text-xs text-muted-foreground whitespace-nowrap mb-3">
             © 2024 InteriorAI Pro
           </p>
+          
+          {/* Profile Section */}
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="/api/placeholder/32/32" />
+              <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs">
+                U
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                User Name
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                user@example.com
+              </p>
+            </div>
+            <Button size="icon" variant="ghost" className="h-8 w-8">
+              <Bell className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+        
+        {/* Collapsed Profile */}
+        {!isExpanded && (
+          <div className="flex justify-center">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="/api/placeholder/32/32" />
+              <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs">
+                U
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        )}
       </div>
 
       {/* Expand indicator */}
