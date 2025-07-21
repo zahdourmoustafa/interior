@@ -62,14 +62,98 @@ The prompt should describe a complete, well-designed space that showcases the sp
       return generatedPrompt;
 
     } catch (error) {
-      console.error('❌ Prompt generation failed, using fallback:', error);
-      
-      // Fallback to static prompt if OpenAI fails
+      console.error('❌ OpenAI prompt generation failed:', error);
       return this.getFallbackPrompt(input.roomType, input.designStyle);
     }
   }
 
+  static async generateSketchToRealityPrompt(input: PromptGenerationInput): Promise<string> {
+    // Check if OpenAI is available
+    if (!openai) {
+      console.log('🔄 OpenAI API key not configured, using fallback sketch-to-reality prompt');
+      return this.getFallbackSketchToRealityPrompt(input.roomType, input.designStyle);
+    }
+
+    try {
+      const systemPrompt = `You are an expert interior designer and AI prompt engineer specializing in converting hand-drawn sketches into realistic interior design images. Your task is to create detailed, specific prompts that will transform sketches into photorealistic interior spaces.
+
+Guidelines:
+- Focus on converting sketch elements into realistic furniture, materials, and textures
+- Emphasize realistic lighting, shadows, and depth
+- Include specific details about materials, finishes, and decorative elements
+- Ensure the prompt matches the room type and design style exactly
+- Aim for photorealistic, professionally designed spaces
+- Keep prompts between 100-200 words
+- Avoid mentioning people, text, or watermarks
+- Always include quality keywords: "photorealistic", "realistic", "detailed", "sharp focus", "professional photography"
+- Emphasize realistic materials, textures, and lighting
+- Focus on converting sketch lines into realistic architectural and design elements
+- Include specific design elements that match the chosen style
+- Emphasize depth, perspective, and realistic spatial relationships`;
+
+      const userPrompt = `Create a detailed prompt for converting a hand-drawn sketch into a realistic ${input.designStyle} style ${input.roomType.replace('-', ' ')} interior design image. 
+      
+Room Type: ${input.roomType.replace('-', ' ')}
+Design Style: ${input.designStyle}
+${input.additionalContext ? `Additional Context: ${input.additionalContext}` : ''}
+
+The prompt should focus on transforming sketch elements into realistic interior spaces with proper lighting, materials, and spatial relationships.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      });
+
+      const generatedPrompt = completion.choices[0]?.message?.content?.trim();
+      
+      if (!generatedPrompt) {
+        throw new Error('Failed to generate sketch-to-reality prompt');
+      }
+
+      console.log('🏠 Generated sketch-to-reality prompt:', generatedPrompt);
+      return generatedPrompt;
+
+    } catch (error) {
+      console.error('❌ OpenAI sketch-to-reality prompt generation failed:', error);
+      return this.getFallbackSketchToRealityPrompt(input.roomType, input.designStyle);
+    }
+  }
+
   private static getFallbackPrompt(roomType: string, designStyle: string): string {
+    const roomDescriptions = {
+      'living-room': 'living room with comfortable seating arrangement, coffee table, ambient lighting, and welcoming atmosphere',
+      'bedroom': 'bedroom with a comfortable bed, nightstands, soft lighting, and relaxing ambiance',
+      'kitchen': 'kitchen with modern appliances, functional countertops, storage solutions, and efficient layout',
+      'dining-room': 'dining room with elegant dining table, chairs, proper lighting, and sophisticated atmosphere',
+      'home-office': 'home office with ergonomic desk setup, comfortable chair, organized storage, and productive environment',
+      'bath-room': 'bathroom with modern fixtures, clean lines, functional storage, and spa-like atmosphere',
+      'game-room': 'game room with entertainment setup, comfortable seating, proper lighting, and fun atmosphere',
+      'kids-room': 'kids room with playful furniture, bright colors, safe design, and child-friendly elements'
+    };
+
+    const styleDescriptions = {
+      'scandinavian': 'Scandinavian design featuring light wood furniture, neutral color palette, cozy textiles, minimalist aesthetic, natural materials, and hygge elements',
+      'christmas': 'Christmas-themed design with warm festive colors, holiday decorations, cozy lighting, seasonal elements, and celebratory atmosphere',
+      'japanese': 'Japanese-inspired design with clean lines, natural materials, zen elements, minimalist furniture, neutral colors, and peaceful ambiance',
+      'eclectic': 'Eclectic design mixing various styles, bold patterns, vibrant colors, unique furniture pieces, artistic elements, and creative combinations',
+      'minimalist': 'Minimalist design with clean lines, neutral colors, simple furniture, uncluttered spaces, functional elements, and serene atmosphere',
+      'futuristic': 'Futuristic design featuring sleek surfaces, modern technology, LED lighting, contemporary materials, geometric shapes, and innovative elements',
+      'bohemian': 'Bohemian design with rich textures, warm earth tones, layered textiles, plants, vintage pieces, and free-spirited atmosphere',
+      'parisian': 'Parisian design with elegant furniture, classic details, sophisticated color scheme, refined materials, and timeless French charm'
+    };
+
+    const roomDesc = roomDescriptions[roomType as keyof typeof roomDescriptions] || `${roomType.replace('-', ' ')} interior space`;
+    const styleDesc = styleDescriptions[designStyle as keyof typeof styleDescriptions] || `${designStyle} style design`;
+
+    return `A professionally designed ${roomDesc} showcasing ${styleDesc}. The space features high-quality furnishings, excellent natural and artificial lighting, perfect color coordination, and attention to detail. The design should be photorealistic, well-composed, and demonstrate superior interior design principles with a focus on functionality and aesthetic appeal.`;
+  }
+
+  private static getFallbackSketchToRealityPrompt(roomType: string, designStyle: string): string {
     const roomDescriptions = {
       'living-room': 'living room with comfortable seating arrangement, coffee table, ambient lighting, and welcoming atmosphere',
       'bedroom': 'bedroom with a comfortable bed, nightstands, soft lighting, and relaxing ambiance',

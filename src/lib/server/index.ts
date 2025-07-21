@@ -135,6 +135,59 @@ export const appRouter = router({
         }
       }),
 
+    generateSketchToReality: authedProcedure
+      .input(z.object({
+        originalImageUrl: z.string(),
+        roomType: z.enum(['living-room', 'kitchen', 'bedroom', 'kids-room', 'dining-room', 'home-office', 'game-room', 'bath-room']),
+        designStyle: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          console.log('🏠 Starting sketch-to-reality generation:', input);
+
+          // Generate dynamic prompt for sketch-to-reality
+          const dynamicPrompt = await PromptGenerator.generateSketchToRealityPrompt({
+            roomType: input.roomType,
+            designStyle: input.designStyle,
+          });
+
+          // Generate image using Replicate with sketch-to-reality model
+          const result = await ReplicateService.generateSketchToReality({
+            imageUrl: input.originalImageUrl,
+            roomType: input.roomType,
+            designStyle: input.designStyle,
+            prompt: dynamicPrompt,
+          });
+
+          // Store in database if successful
+          if (result.status === 'completed' && result.imageUrl && ctx.user) {
+            const imageRecord = await db.insert(images).values({
+              userId: ctx.user.id,
+              originalImageUrl: input.originalImageUrl,
+              generatedImageUrl: result.imageUrl,
+              roomType: input.roomType,
+              style: input.designStyle,
+              aiPromptUsed: dynamicPrompt,
+              resolution: '4K',
+            }).returning();
+
+            console.log('✅ Sketch-to-reality image saved to database:', imageRecord[0]?.id);
+          }
+
+          return {
+            jobId: result.jobId,
+            generatedImageUrl: result.imageUrl,
+            status: result.status,
+            error: result.error,
+            prompt: dynamicPrompt,
+          };
+
+        } catch (error) {
+          console.error('❌ Sketch-to-reality generation failed:', error);
+          throw new Error(error instanceof Error ? error.message : 'Sketch-to-reality generation failed');
+        }
+      }),
+
     uploadImage: authedProcedure
       .input(z.object({
         file: z.any(), // File object

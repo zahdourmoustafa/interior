@@ -14,6 +14,11 @@ interface MainImageDisplayProps {
   isGenerating: boolean;
   onImageUpload: (file: File) => void;
   onImageRemove?: () => void;
+  uploadText?: {
+    title: string;
+    description: string;
+    placeholder: string;
+  };
 }
 
 export function MainImageDisplay({ 
@@ -21,7 +26,8 @@ export function MainImageDisplay({
   generatedImage, 
   isGenerating,
   onImageUpload,
-  onImageRemove 
+  onImageRemove,
+  uploadText 
 }: MainImageDisplayProps) {
   const [dragActive, setDragActive] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
@@ -67,6 +73,15 @@ export function MainImageDisplay({
 
   const displayImage = generatedImage || selectedImage;
   const canShowComparison = selectedImage && generatedImage;
+
+  // Default upload text
+  const defaultUploadText = {
+    title: "Upload your room image",
+    description: "Drag and drop an image here, or click to select",
+    placeholder: "Supports JPG, PNG, WebP up to 10MB"
+  };
+
+  const finalUploadText = uploadText || defaultUploadText;
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -137,13 +152,13 @@ export function MainImageDisplay({
             <div className="text-center p-8">
               <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Upload your room image
+                {finalUploadText.title}
               </h3>
               <p className="text-gray-500 mb-4">
-                Drag and drop an image here, or click to select
+                {finalUploadText.description}
               </p>
               <p className="text-sm text-gray-400">
-                Supports JPG, PNG, WebP up to 10MB
+                {finalUploadText.placeholder}
               </p>
             </div>
             <input

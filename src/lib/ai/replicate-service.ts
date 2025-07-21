@@ -46,6 +46,9 @@ export class ReplicateService {
   private static readonly MODEL_ID =
     "adirik/interior-design:76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38";
 
+  private static readonly SKETCH_TO_REALITY_MODEL_ID =
+    "adirik/interior-design:76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38";
+
   static async generateInteriorDesign(
     input: GenerateImageInput
   ): Promise<GenerateImageOutput> {
@@ -116,7 +119,126 @@ export class ReplicateService {
     }
   }
 
+  static async generateSketchToReality(
+    input: GenerateImageInput
+  ): Promise<GenerateImageOutput> {
+    try {
+      console.log("🏠 Starting sketch-to-reality generation:", {
+        roomType: input.roomType,
+        designStyle: input.designStyle,
+        imageUrl: input.imageUrl.substring(0, 50) + "...",
+      });
+
+      const replicateClient = getReplicate();
+      const output = (await replicateClient.run(this.SKETCH_TO_REALITY_MODEL_ID, {
+        input: {
+          image: input.imageUrl,
+          prompt:
+            input.prompt ||
+            this.generateSketchToRealityPrompt(input.roomType, input.designStyle),
+          guidance_scale: 7.5, // Lower guidance for more creative interpretation
+          negative_prompt:
+            "lowres, watermark, banner, logo, watermark, contactinfo, text, deformed, blurry, blur, out of focus, out of frame, surreal, extra, ugly, sketch, drawing, line art, cartoon, anime, illustration, painting, artistic, low quality, pixelated, noise, artifacts, compression artifacts, jpeg artifacts, blur, soft, unfocused, hazy, low resolution, grainy, noisy, text, writing, watermark, logo, oversaturation, over saturation, over shadow",
+          prompt_strength: 0.85, // Stronger style application for sketch conversion
+          num_inference_steps: 75, // Higher quality for sketch-to-reality
+          width: 1024, // High resolution
+          height: 1024, // High resolution
+          scheduler: "DPMSolverMultistep", // Better scheduler for quality
+          seed: Math.floor(Math.random() * 1000000), // Random seed for variety
+        },
+      })) as unknown;
+
+      // Handle the output - it could be a URL string, array, or URL object
+      let imageUrl: string;
+      
+      if (typeof output === "string") {
+        imageUrl = output;
+      } else if (Array.isArray(output) && output.length > 0) {
+        imageUrl = output[0];
+      } else if (output && typeof output === "object") {
+        // Handle URL object from Replicate
+        const outputObj = output as Record<string, unknown>;
+        if ("href" in outputObj && typeof outputObj.href === "string") {
+          imageUrl = outputObj.href;
+        } else if ("url" in outputObj) {
+          const urlValue = outputObj.url;
+          imageUrl =
+            typeof urlValue === "function" ? urlValue() : String(urlValue);
+        } else {
+          // Try to convert to string
+          imageUrl = String(output);
+        }
+      } else {
+        throw new Error("Unexpected output format from Replicate");
+      }
+
+      console.log("✅ Sketch-to-reality generation completed:", imageUrl);
+
+      return {
+        jobId: `sketch_replicate_${Date.now()}`,
+        imageUrl,
+        status: "completed",
+      };
+    } catch (error) {
+      console.error("❌ Sketch-to-reality generation failed:", error);
+      return {
+        jobId: `sketch_failed_${Date.now()}`,
+        status: "failed",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
   private static generateDefaultPrompt(
+    roomType: string,
+    designStyle: string
+  ): string {
+    const roomPrompts = {
+      "living-room":
+        "living room with comfortable seating, coffee table, and ambient lighting",
+      bedroom:
+        "bedroom with a comfortable bed, nightstands, and relaxing atmosphere",
+      kitchen:
+        "kitchen with modern appliances, countertops, and functional layout",
+      "dining-room":
+        "dining room with dining table, chairs, and elegant atmosphere",
+      "home-office":
+        "home office with desk, chair, and productive workspace setup",
+      "bath-room": "bathroom with fixtures, vanity, and clean modern design",
+      "game-room": "game room with entertainment setup and comfortable seating",
+      "kids-room":
+        "kids room with playful elements, storage, and child-friendly furniture",
+    };
+
+    const stylePrompts = {
+      scandinavian:
+        "Scandinavian style with light wood, neutral colors, minimalist furniture, and natural textures",
+      christmas:
+        "Christmas themed with warm colors, festive decorations, cozy lighting, and holiday elements",
+      japanese:
+        "Japanese style with clean lines, natural materials, zen elements, and minimalist aesthetic",
+      eclectic:
+        "Eclectic style with mixed patterns, vibrant colors, unique furniture pieces, and artistic elements",
+      minimalist:
+        "Minimalist style with clean lines, neutral palette, simple furniture, and uncluttered space",
+      futuristic:
+        "Futuristic style with sleek surfaces, modern technology, LED lighting, and contemporary materials",
+      bohemian:
+        "Bohemian style with rich textures, warm colors, plants, and eclectic decorative elements",
+      parisian:
+        "Parisian style with elegant furniture, classic details, sophisticated colors, and refined atmosphere",
+    };
+
+    const roomDesc =
+      roomPrompts[roomType as keyof typeof roomPrompts] || "interior space";
+    const styleDesc =
+      stylePrompts[designStyle as keyof typeof stylePrompts] || "modern style";
+
+    return `A beautifully designed ${roomDesc} featuring ${styleDesc}. The space should be well-lit with natural light, professionally photographed, high-resolution, 8K quality, photorealistic, detailed textures, perfect lighting, and showcase excellent interior design principles with attention to color harmony, furniture placement, and overall aesthetic appeal. Ultra-detailed, sharp focus, professional interior photography.`;
+  }
+
+  private static generateSketchToRealityPrompt(
     roomType: string,
     designStyle: string
   ): string {
