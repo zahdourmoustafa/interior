@@ -386,16 +386,66 @@ export const appRouter = router({
         }
       }),
 
+    removeObject: authedProcedure
+      .input(
+        z.object({
+          imageUrl: z.string(),
+          mask: z.string().optional(),
+          prompt: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          console.log("🎨 Starting object removal:", input);
+
+          const result = await GeminiService.removeObject({
+            imageUrl: input.imageUrl,
+            mask: input.mask,
+            prompt: input.prompt,
+          });
+
+          if (result.status === "completed" && result.imageUrl && ctx.user) {
+            await db.insert(images).values({
+              userId: ctx.user.id,
+              originalImageUrl: input.imageUrl,
+              generatedImageUrl: result.imageUrl,
+              roomType: "remove-object",
+              style: "custom",
+              aiPromptUsed: input.prompt,
+              resolution: "4K",
+            });
+          }
+
+          return {
+            generatedImageUrl: result.imageUrl,
+            status: result.status,
+          };
+        } catch (error) {
+          console.error("❌ Object removal failed:", error);
+          throw new Error(
+            error instanceof Error
+              ? error.message
+              : "Object removal failed"
+          );
+        }
+      }),
+
     uploadImage: authedProcedure
       .input(
         z.object({
-          file: z.any(), // File object
+          file: z.string(), // Expect a base64 string
           filename: z.string(),
         })
       )
       .mutation(async ({ input }) => {
         try {
-          const imageUrl = await GeminiService.uploadImageToBlob(input.file);
+          const base64Data = input.file.replace(/^data:image\/\w+;base64,/, "");
+          const buffer = Buffer.from(base64Data, "base64");
+
+          const imageUrl = await GeminiService.uploadImageToBlob(
+            buffer,
+            input.filename
+          );
           return { imageUrl };
         } catch (error) {
           console.error("❌ Upload failed:", error);

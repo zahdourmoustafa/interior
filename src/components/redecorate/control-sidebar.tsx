@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const quickTools = [
   { id: "home-staging", name: "Home Staging", image: "/modern.webp" },
@@ -167,6 +168,10 @@ interface ControlSidebarProps {
   promptPlaceholder?: string;
   onReset?: () => void;
   isResettable?: boolean;
+  generateButtonText?: string;
+  generateButtonDisabled?: boolean;
+  isDrawingMode?: boolean;
+  onDrawingModeChange?: (isDrawingMode: boolean) => void;
 }
 
 export function ControlSidebar({
@@ -183,7 +188,12 @@ export function ControlSidebar({
   promptPlaceholder = "Describe your design...",
   onReset,
   isResettable,
-}: ControlSidebarProps) {
+  generateButtonText = "Generate",
+  generateButtonDisabled,
+  isDrawingMode,
+  onDrawingModeChange,
+  children,
+}: ControlSidebarProps & { children?: React.ReactNode }) {
   const [expandedSections, setExpandedSections] = useState({
     roomType: true,
     prompt: true,
@@ -198,32 +208,33 @@ export function ControlSidebar({
 
   return (
     <div className="w-80 bg-white border-l flex flex-col h-full overflow-y-auto">
-      {/* Quick Tools Grid */}
-      <div className="p-4 border-b">
-        <div className="grid grid-cols-4 gap-2">
-          {quickTools.map((tool) => (
-            <div key={tool.id} className="text-center">
-              <div className="relative w-12 h-12 mx-auto mb-1 rounded-lg overflow-hidden">
-                <Image
-                  src={tool.image}
-                  alt={tool.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <span className="text-xs text-gray-600 leading-tight">
-                {tool.name}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Title and Description */}
       <div className="p-4 border-b">
         <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
         <p className="text-sm text-gray-600">{description}</p>
       </div>
+
+      {/* Draw Mode Toggle */}
+      {onDrawingModeChange !== undefined && (
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="drawing-mode-switch" className="font-medium text-gray-900">
+              Draw Mode
+            </Label>
+            <Switch
+              id="drawing-mode-switch"
+              checked={isDrawingMode}
+              onCheckedChange={onDrawingModeChange}
+            />
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Turn on to brush on the image.
+          </p>
+        </div>
+      )}
+
+      {/* Children (for Brush Controls etc) */}
+      {children}
 
       {/* Prompt Input Section */}
       {prompt !== undefined && onPromptChange && (
@@ -309,10 +320,12 @@ export function ControlSidebar({
         )}
         <Button
           onClick={onGenerate}
-          disabled={isGenerating || (showRoomType && !selectedRoomType) || (prompt !== undefined && !prompt?.trim())}
+          disabled={isGenerating || 
+                   (generateButtonDisabled !== undefined ? generateButtonDisabled : 
+                    ((showRoomType && !selectedRoomType) || (prompt !== undefined && !prompt?.trim())))}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 text-lg font-medium"
         >
-          {isGenerating ? "Generating..." : "Generate"}
+          {isGenerating ? "Generating..." : generateButtonText || "Generate"}
         </Button>
       </div>
     </div>

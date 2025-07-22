@@ -2,7 +2,6 @@ import { GoogleGenAI, Part } from "@google/genai";
 import { put } from "@vercel/blob";
 import mime from "mime";
 import { furnishEmptySpaceSystemPrompt } from "./prompts/furnish-prompt";
-import { EnhancementService } from "./enhancement-service";
 
 // Initialize Google AI with proper error handling
 const getGoogleAI = () => {
@@ -148,11 +147,9 @@ export class GeminiService {
 
           console.log("✅ Gemini generation completed:", blob.url);
 
-          const enhancedUrl = await EnhancementService.enhance(blob.url);
-
           return {
             jobId: `gemini_${Date.now()}`,
-            imageUrl: enhancedUrl,
+            imageUrl: blob.url,
             status: "completed",
           };
         }
@@ -251,11 +248,9 @@ export class GeminiService {
             blob.url
           );
 
-          const enhancedUrl = await EnhancementService.enhance(blob.url);
-
           return {
             jobId: `gemini_sketch_${Date.now()}`,
-            imageUrl: enhancedUrl,
+            imageUrl: blob.url,
             status: "completed",
           };
         }
@@ -330,11 +325,9 @@ export class GeminiService {
             blob.url
           );
 
-          const enhancedUrl = await EnhancementService.enhance(blob.url);
-
           return {
             jobId: `gemini_text_design_${Date.now()}`,
-            imageUrl: enhancedUrl,
+            imageUrl: blob.url,
             status: "completed",
           };
         }
@@ -425,11 +418,9 @@ export class GeminiService {
 
           console.log("✅ Gemini furnishing completed:", blob.url);
 
-          const enhancedUrl = await EnhancementService.enhance(blob.url);
-
           return {
             jobId: `gemini_furnished_${Date.now()}`,
-            imageUrl: enhancedUrl,
+            imageUrl: blob.url,
             status: "completed",
           };
         }
@@ -440,6 +431,136 @@ export class GeminiService {
       console.error("❌ Gemini furnishing failed:", error);
       return {
         jobId: `gemini_furnished_failed_${Date.now()}`,
+        status: "failed",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
+  static async removeObject(
+    input: { imageUrl: string; mask?: string; prompt: string }
+  ): Promise<GenerateImageOutput> {
+    try {
+      console.log("🎨 Starting object removal with Gemini Flash 2.0:", {
+        imageUrl: input.imageUrl.substring(0, 50) + "...",
+        maskProvided: !!input.mask,
+        prompt: input.prompt,
+      });
+
+      const ai = getGoogleAI();
+
+      // Process the original image
+      const imagePart = await urlToGenerativePart(
+        input.imageUrl,
+        getMimeTypeFromUrl(input.imageUrl)
+      );
+
+      const parts: Part[] = [imagePart];
+
+      // Process the mask image if provided
+      if (input.mask) {
+        const maskPart = await urlToGenerativePart(input.mask, "image/png");
+        parts.push(maskPart);
+      }
+
+      const config = {
+        responseModalities: ["IMAGE", "TEXT"],
+        responseMimeType: "text/plain",
+      };
+
+      const generationConfig = {
+        quality: "hd", // Use 'hd' for higher quality
+        responseMimeType: "image/png", // Request a high-quality PNG
+        temperature: 0.2, // Lower temperature for more predictable results
+        negativePrompt: [
+          "blurry, grainy, low-resolution, unrealistic, cartoonish, discolored, watermark, signature, text",
+        ],
+      };
+
+      const model = this.IMAGE_GENERATION_MODEL;
+
+      // Create a prompt that instructs Gemini to remove the object marked by the red mask
+      const removeObjectPrompt = `
+        You are a professional photo editor specializing in object removal. 
+        ${
+          input.mask
+            ? `I'm providing two images:
+        1. The original image
+        2. The same image with a red mask highlighting the object to be removed
+        
+        Please remove ONLY the object highlighted by the red mask and replace it with appropriate background content that matches the surrounding area.`
+            : "I'm providing an image and a prompt."
+        }
+        
+        The user has provided the following instruction: "${input.prompt}"
+
+        Important requirements:
+        - ${
+          input.mask
+            ? "Remove ONLY the red-masked area"
+            : "Follow the user's prompt to remove the object."
+        }
+        - Use inpainting to fill the removed area naturally
+        - Maintain the exact same perspective, lighting, and style as the original image
+        - Ensure the result looks completely natural with no artifacts
+        - Do not alter any other part of the image
+        - Preserve the original image dimensions and quality
+        
+        Generate a photorealistic result that makes it appear as if the object was never there.
+      `;
+
+      parts.push({ text: removeObjectPrompt });
+
+      const contents = [
+        {
+          role: "user",
+          parts: parts,
+        },
+      ];
+
+      const response = await ai.models.generateContentStream({
+        model,
+        config,
+        generationConfig,
+        contents,
+      });
+
+      for await (const chunk of response) {
+        if (
+          !chunk.candidates ||
+          !chunk.candidates[0].content ||
+          !chunk.candidates[0].content.parts
+        ) {
+          continue;
+        }
+        if (chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
+          const inlineData = chunk.candidates[0].content.parts[0].inlineData;
+          const imageBytes = Buffer.from(inlineData.data || "", "base64");
+          const blob = await put(
+            `gemini-object-removed-${Date.now()}.png`,
+            imageBytes,
+            {
+              access: "public",
+              token: process.env.BLOB_READ_WRITE_TOKEN!,
+            }
+          );
+
+          console.log("✅ Gemini object removal completed:", blob.url);
+
+          return {
+            jobId: `gemini_removed_${Date.now()}`,
+            imageUrl: blob.url,
+            status: "completed",
+          };
+        }
+      }
+
+      throw new Error("No images generated from Gemini");
+    } catch (error) {
+      console.error("❌ Gemini object removal failed:", error);
+      return {
+        jobId: `gemini_removed_failed_${Date.now()}`,
         status: "failed",
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
@@ -567,12 +688,15 @@ With the camera position locked, you will then render the following surface-leve
 Do not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
   }
 
-  static async uploadImageToBlob(file: File): Promise<string> {
+  static async uploadImageToBlob(
+    file: Buffer,
+    filename: string
+  ): Promise<string> {
     try {
       // Generate unique filename to avoid conflicts
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(2, 15);
-      const extension = file.name.split(".").pop() || "jpg";
+      const extension = filename.split(".").pop() || "jpg";
       const uniqueFilename = `interior-design-${timestamp}-${randomId}.${extension}`;
 
       const blob = await put(uniqueFilename, file, {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Home, CreditCard, FileCode, Settings, ChevronRight } from 'lucide-react';
+import { Home, CreditCard, FileCode, Settings, ChevronRight, Image, Video, Scissors, Brush, Wallpaper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -10,9 +10,13 @@ import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Pricing', href: '/dashboard/pricing', icon: CreditCard },
-  { name: 'API', href: '/dashboard/api', icon: FileCode },
-  { name: 'Theme', href: '/dashboard/theme', icon: Settings },
+  { name: 'Interior', href: '/dashboard/redecorate-room', icon: Wallpaper },
+  { name: 'Exterior', href: '/dashboard/redesign-exterior', icon: Home },
+  { name: 'Sketch', href: '/dashboard/sketch-to-reality', icon: Brush },
+  { name: 'Furnish Empty Space', href: '/dashboard/furnish-empty-space', icon: Image },
+  { name: 'Remove Object', href: '/dashboard/remove-object', icon: Scissors },
+  { name: 'Generate Video', href: '/dashboard/generate-videos', icon: Video },
+
 ];
 
 interface SidebarProps {

@@ -37,40 +37,24 @@ const features = [
     generation: 1
   },
   {
-    title: 'Magic Edit',
-    description: 'Easily transform your scene with simple text descriptions. See the results in seconds.',
-    href: '/dashboard/magic-edit',
+    title: 'Remove Object',
+    description: 'Use the brush to select objects you want to remove from the image.',
+    href: '/dashboard/remove-object',
     backgroundImage: '/coastal.webp',
-    minutes: 2,
+    minutes: 1,
     generation: 1,
-    badgeText: 'NEW',
+    badgeText: 'AI',
     badgeVariant: 'new'
   },
   {
-    title: 'Style Transfer',
-    description: 'Instantly apply amazing design styles to your interiors and exteriors.',
-    href: '/dashboard/style-transfer',
+    title: 'Generate Video',
+    description: 'Create stunning videos from your images with AI.',
+    href: '/dashboard/generate-videos',
     backgroundImage: '/vintage.webp',
-    minutes: 1,
+    minutes: 3,
     generation: 1,
-    badgeText: 'PRO',
-    badgeVariant: 'pro'
-  },
-  {
-    title: 'Virtual Staging',
-    description: 'Reimagine your home with AI. Upload a photo, select a style, and transform your interiors instantly.',
-    href: '/dashboard/virtual-staging',
-    backgroundImage: '/tropical.webp',
-    minutes: 1,
-    generation: 1
-  },
-  {
-    title: 'Enhance',
-    description: 'Easily make images and improve their quality by reducing noise and enhancing details. Perfect for all your design needs.',
-    href: '/dashboard/enhance',
-    backgroundImage: '/industrial.webp',
-    minutes: 1,
-    generation: 1
+    badgeText: 'NEW',
+    badgeVariant: 'new'
   },
 ];
 
@@ -79,7 +63,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       <ErrorBoundary>
         <div className="bg-[#F8F8FA] min-h-screen p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
               <FeatureCard
                 key={feature.title}
