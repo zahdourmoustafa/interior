@@ -13,7 +13,7 @@ export default function RedesignExteriorPage() {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-
+  const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
 
@@ -23,6 +23,7 @@ export default function RedesignExteriorPage() {
   };
 
   const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
     const uploadToast = toast.loading('Uploading image...');
     
     try {
@@ -55,6 +56,8 @@ export default function RedesignExteriorPage() {
       console.error('❌ Upload failed:', error);
       toast.error('Failed to upload image. Please try again.', { id: uploadToast });
       // Keep the preview URL if upload fails
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -98,8 +101,8 @@ export default function RedesignExteriorPage() {
 
   const handleGenerate = async () => {
     // Validation with user-friendly messages
-    if (!selectedImage) {
-      toast.error('Please upload an image first');
+    if (!selectedImage || selectedImage.startsWith("blob:")) {
+      toast.error('Please wait for the image to finish uploading before generating.');
       return;
     }
     
@@ -144,7 +147,7 @@ export default function RedesignExteriorPage() {
           <MainImageDisplay
             selectedImage={selectedImage}
             generatedImages={generatedImages}
-            isGenerating={isGenerating}
+            isGenerating={isGenerating || isUploading}
             generatingSlot={generatingSlot}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
@@ -155,7 +158,7 @@ export default function RedesignExteriorPage() {
         {/* Right Sidebar - Controls */}
         <ControlSidebar
           onGenerate={handleGenerate}
-          isGenerating={isGenerating}
+          isGenerating={isGenerating || isUploading}
           title="Design Style"
           description="Select the design style for your exterior"
           showRoomType={false}

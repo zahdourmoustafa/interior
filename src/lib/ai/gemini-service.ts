@@ -2,6 +2,7 @@ import { GoogleGenAI, Part } from "@google/genai";
 import { put } from "@vercel/blob";
 import mime from "mime";
 import { furnishEmptySpaceSystemPrompt } from "./prompts/furnish-prompt";
+import { EnhancementService } from "./enhancement-service";
 
 // Initialize Google AI with proper error handling
 const getGoogleAI = () => {
@@ -147,9 +148,11 @@ export class GeminiService {
 
           console.log("✅ Gemini generation completed:", blob.url);
 
+          const enhancedUrl = await EnhancementService.enhance(blob.url);
+
           return {
             jobId: `gemini_${Date.now()}`,
-            imageUrl: blob.url,
+            imageUrl: enhancedUrl,
             status: "completed",
           };
         }
@@ -248,9 +251,11 @@ export class GeminiService {
             blob.url
           );
 
+          const enhancedUrl = await EnhancementService.enhance(blob.url);
+
           return {
             jobId: `gemini_sketch_${Date.now()}`,
-            imageUrl: blob.url,
+            imageUrl: enhancedUrl,
             status: "completed",
           };
         }
@@ -325,9 +330,11 @@ export class GeminiService {
             blob.url
           );
 
+          const enhancedUrl = await EnhancementService.enhance(blob.url);
+
           return {
             jobId: `gemini_text_design_${Date.now()}`,
-            imageUrl: blob.url,
+            imageUrl: enhancedUrl,
             status: "completed",
           };
         }
@@ -418,9 +425,11 @@ export class GeminiService {
 
           console.log("✅ Gemini furnishing completed:", blob.url);
 
+          const enhancedUrl = await EnhancementService.enhance(blob.url);
+
           return {
             jobId: `gemini_furnished_${Date.now()}`,
-            imageUrl: blob.url,
+            imageUrl: enhancedUrl,
             status: "completed",
           };
         }

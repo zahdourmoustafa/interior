@@ -177,8 +177,10 @@ export const appRouter = router({
           });
 
           // Generate image using Gemini
-          const result = await GeminiService.generateInteriorDesign({ // This can be a generic image generator
+          const result = await GeminiService.generateInteriorDesign({
             imageUrl: input.originalImageUrl,
+            roomType: "exterior", // Set a default room type for exterior designs
+            designStyle: input.designStyle,
             prompt: dynamicPrompt,
           });
 

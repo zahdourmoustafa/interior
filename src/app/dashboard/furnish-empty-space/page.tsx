@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 export default function FurnishEmptySpacePage() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [loadingToastId, setLoadingToastId] = useState<string | null>(null);
@@ -39,7 +40,10 @@ export default function FurnishEmptySpacePage() {
   });
 
   const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
     const uploadToast = toast.loading("Uploading image...");
+    
+    // Show a preview immediately
     const previewUrl = URL.createObjectURL(file);
     setOriginalImage(previewUrl);
     setCurrentImage(previewUrl);
@@ -58,12 +62,16 @@ export default function FurnishEmptySpacePage() {
       }
 
       const result = await response.json();
+      
+      // Set the permanent URL once upload is complete
       setOriginalImage(result.imageUrl);
       setCurrentImage(result.imageUrl);
       toast.success("Image uploaded successfully!", { id: uploadToast });
     } catch (error) {
       console.error("❌ Upload failed:", error);
       toast.error("Failed to upload image. Please try again.", { id: uploadToast });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -81,8 +89,8 @@ export default function FurnishEmptySpacePage() {
   };
 
   const handleGenerate = async () => {
-    if (!currentImage) {
-      toast.error("Please upload an image of an empty room first.");
+    if (!currentImage || currentImage.startsWith("blob:")) {
+      toast.error("Please wait for the image to finish uploading before generating.");
       return;
     }
     if (!prompt.trim()) {
@@ -110,7 +118,7 @@ export default function FurnishEmptySpacePage() {
         <div className="flex-1 p-6">
           <SingleImageDisplay
             image={currentImage}
-            isGenerating={isGenerating}
+            isGenerating={isGenerating || isUploading}
             onImageUpload={handleImageUpload}
             onImageRemove={handleClearAll}
             title="Upload an Empty Room"
@@ -120,7 +128,7 @@ export default function FurnishEmptySpacePage() {
         <ControlSidebar
           title="Furnish Empty Space"
           description="Describe the furniture and style you want to add to your empty room."
-          isGenerating={isGenerating}
+          isGenerating={isGenerating || isUploading}
           onGenerate={handleGenerate}
           showRoomType={false}
           showDesignStyle={false}
