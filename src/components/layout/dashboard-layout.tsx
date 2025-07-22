@@ -13,12 +13,12 @@ export function DashboardLayout({ children, useContainer = true }: DashboardLayo
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex h-screen bg-background">
-      {!isMobile && <Sidebar />}
+    <div className="flex h-screen bg-[#F8F8FA]">
+      {!isMobile && <Sidebar className="border-r border-[#EAECEF]" />}
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
           {useContainer ? (
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="container mx-auto px-6 py-6 max-w-[1400px]">
               {children}
             </div>
           ) : (

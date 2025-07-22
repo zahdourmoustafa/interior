@@ -50,7 +50,7 @@ export default function TextToDesignPage() {
 
     setIsGenerating(true);
     const loadingToast = toast.loading("🎨 Generating your design... This may take 30-60 seconds");
-    setLoadingToastId(loadingToast);
+    setLoadingToastId(loadingToast as string);
 
     try {
       await generateMutation.mutateAsync({

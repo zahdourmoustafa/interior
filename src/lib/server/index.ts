@@ -1,12 +1,12 @@
-import { initTRPC } from '@trpc/server';
-import { z } from 'zod';
-import { db } from '../db';
-import { images, favorites, users } from '../db/schema';
-import { eq, desc } from 'drizzle-orm';
-import { validateImageFile } from './upload';
-import { ReplicateService } from '../ai/replicate-service';
-import { PromptGenerator } from '../ai/prompt-generator';
-import type { User } from '../db/schema';
+import { initTRPC } from "@trpc/server";
+import { z } from "zod";
+import { db } from "../db";
+import { images, favorites, users } from "../db/schema";
+import { eq, desc } from "drizzle-orm";
+import { validateImageFile } from "./upload";
+import { GeminiService } from "../ai/gemini-service";
+import { PromptGenerator } from "../ai/prompt-generator";
+import type { User } from "../db/schema";
 
 const t = initTRPC.create();
 
@@ -17,23 +17,30 @@ const authedProcedure = t.procedure.use(async (opts) => {
   const { ctx } = opts;
   // For now, create a mock user for development
   // TODO: Replace with actual authentication check
-  const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
-  
+  const mockUserId = "550e8400-e29b-41d4-a716-446655440000";
+
   // Check if mock user exists, if not create it
-  let mockUser = await db.select().from(users).where(eq(users.id, mockUserId)).limit(1);
-  
+  let mockUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, mockUserId))
+    .limit(1);
+
   if (mockUser.length === 0) {
-    console.log('🔧 Creating mock user for development...');
-    const newUser = await db.insert(users).values({
-      id: mockUserId,
-      email: 'dev-user@interiorai.com',
-      name: 'Development User',
-      emailVerified: true,
-      image: null,
-    }).returning();
+    console.log("🔧 Creating mock user for development...");
+    const newUser = await db
+      .insert(users)
+      .values({
+        id: mockUserId,
+        email: "dev-user@interiorai.com",
+        name: "Development User",
+        emailVerified: true,
+        image: null,
+      })
+      .returning();
     mockUser = newUser;
   }
-  
+
   return opts.next({
     ctx: {
       ...ctx,
@@ -49,25 +56,27 @@ export const appRouter = router({
       return null;
     }),
   }),
-  
+
   user: router({
     getProfile: authedProcedure.query(async ({ ctx }) => {
       // Return user profile
       return ctx.user;
     }),
   }),
-  
+
   images: router({
     getAll: authedProcedure.query(async () => {
       return await db.select().from(images).orderBy(desc(images.createdAt));
     }),
 
     upload: authedProcedure
-      .input(z.object({
-        filename: z.string(),
-        contentType: z.string(),
-        size: z.number(),
-      }))
+      .input(
+        z.object({
+          filename: z.string(),
+          contentType: z.string(),
+          size: z.number(),
+        })
+      )
       .mutation(async ({ input }) => {
         const validation = validateImageFile({
           name: input.filename,
@@ -81,16 +90,27 @@ export const appRouter = router({
 
         return { valid: true };
       }),
-    
+
     generateRedecorate: authedProcedure
-      .input(z.object({
-        originalImageUrl: z.string(),
-        roomType: z.enum(['living-room', 'kitchen', 'bedroom', 'kids-room', 'dining-room', 'home-office', 'game-room', 'bath-room']),
-        designStyle: z.string(),
-      }))
+      .input(
+        z.object({
+          originalImageUrl: z.string(),
+          roomType: z.enum([
+            "living-room",
+            "kitchen",
+            "bedroom",
+            "kids-room",
+            "dining-room",
+            "home-office",
+            "game-room",
+            "bath-room",
+          ]),
+          designStyle: z.string(),
+        })
+      )
       .mutation(async ({ input, ctx }) => {
         try {
-          console.log('🎨 Starting redecoration generation:', input);
+          console.log("🎨 Starting redecoration generation:", input);
 
           // Generate dynamic prompt using OpenAI
           const dynamicPrompt = await PromptGenerator.generateDynamicPrompt({
@@ -98,8 +118,8 @@ export const appRouter = router({
             designStyle: input.designStyle,
           });
 
-          // Generate image using Replicate
-          const result = await ReplicateService.generateInteriorDesign({
+          // Generate image using Gemini
+          const result = await GeminiService.generateInteriorDesign({
             imageUrl: input.originalImageUrl,
             roomType: input.roomType,
             designStyle: input.designStyle,
@@ -107,18 +127,21 @@ export const appRouter = router({
           });
 
           // Store in database if successful
-          if (result.status === 'completed' && result.imageUrl && ctx.user) {
-            const imageRecord = await db.insert(images).values({
-              userId: ctx.user.id,
-              originalImageUrl: input.originalImageUrl,
-              generatedImageUrl: result.imageUrl,
-              roomType: input.roomType,
-              style: input.designStyle,
-              aiPromptUsed: dynamicPrompt,
-              resolution: '4K',
-            }).returning();
+          if (result.status === "completed" && result.imageUrl && ctx.user) {
+            const imageRecord = await db
+              .insert(images)
+              .values({
+                userId: ctx.user.id,
+                originalImageUrl: input.originalImageUrl,
+                generatedImageUrl: result.imageUrl,
+                roomType: input.roomType,
+                style: input.designStyle,
+                aiPromptUsed: dynamicPrompt,
+                resolution: "4K",
+              })
+              .returning();
 
-            console.log('✅ Image saved to database:', imageRecord[0]?.id);
+            console.log("✅ Image saved to database:", imageRecord[0]?.id);
           }
 
           return {
@@ -128,31 +151,44 @@ export const appRouter = router({
             error: result.error,
             prompt: dynamicPrompt,
           };
-
         } catch (error) {
-          console.error('❌ Generation failed:', error);
-          throw new Error(error instanceof Error ? error.message : 'Generation failed');
+          console.error("❌ Generation failed:", error);
+          throw new Error(
+            error instanceof Error ? error.message : "Generation failed"
+          );
         }
       }),
 
     generateSketchToReality: authedProcedure
-      .input(z.object({
-        originalImageUrl: z.string(),
-        roomType: z.enum(['living-room', 'kitchen', 'bedroom', 'kids-room', 'dining-room', 'home-office', 'game-room', 'bath-room']),
-        designStyle: z.string(),
-      }))
+      .input(
+        z.object({
+          originalImageUrl: z.string(),
+          roomType: z.enum([
+            "living-room",
+            "kitchen",
+            "bedroom",
+            "kids-room",
+            "dining-room",
+            "home-office",
+            "game-room",
+            "bath-room",
+          ]),
+          designStyle: z.string(),
+        })
+      )
       .mutation(async ({ input, ctx }) => {
         try {
-          console.log('🏠 Starting sketch-to-reality generation:', input);
+          console.log("🏠 Starting sketch-to-reality generation:", input);
 
           // Generate dynamic prompt for sketch-to-reality
-          const dynamicPrompt = await PromptGenerator.generateSketchToRealityPrompt({
-            roomType: input.roomType,
-            designStyle: input.designStyle,
-          });
+          const dynamicPrompt =
+            await PromptGenerator.generateSketchToRealityPrompt({
+              roomType: input.roomType,
+              designStyle: input.designStyle,
+            });
 
-          // Generate image using Replicate with sketch-to-reality model
-          const result = await ReplicateService.generateSketchToReality({
+          // Generate image using Gemini with sketch-to-reality model
+          const result = await GeminiService.generateSketchToReality({
             imageUrl: input.originalImageUrl,
             roomType: input.roomType,
             designStyle: input.designStyle,
@@ -160,18 +196,24 @@ export const appRouter = router({
           });
 
           // Store in database if successful
-          if (result.status === 'completed' && result.imageUrl && ctx.user) {
-            const imageRecord = await db.insert(images).values({
-              userId: ctx.user.id,
-              originalImageUrl: input.originalImageUrl,
-              generatedImageUrl: result.imageUrl,
-              roomType: input.roomType,
-              style: input.designStyle,
-              aiPromptUsed: dynamicPrompt,
-              resolution: '4K',
-            }).returning();
+          if (result.status === "completed" && result.imageUrl && ctx.user) {
+            const imageRecord = await db
+              .insert(images)
+              .values({
+                userId: ctx.user.id,
+                originalImageUrl: input.originalImageUrl,
+                generatedImageUrl: result.imageUrl,
+                roomType: input.roomType,
+                style: input.designStyle,
+                aiPromptUsed: dynamicPrompt,
+                resolution: "4K",
+              })
+              .returning();
 
-            console.log('✅ Sketch-to-reality image saved to database:', imageRecord[0]?.id);
+            console.log(
+              "✅ Sketch-to-reality image saved to database:",
+              imageRecord[0]?.id
+            );
           }
 
           return {
@@ -181,41 +223,52 @@ export const appRouter = router({
             error: result.error,
             prompt: dynamicPrompt,
           };
-
         } catch (error) {
-          console.error('❌ Sketch-to-reality generation failed:', error);
-          throw new Error(error instanceof Error ? error.message : 'Sketch-to-reality generation failed');
+          console.error("❌ Sketch-to-reality generation failed:", error);
+          throw new Error(
+            error instanceof Error
+              ? error.message
+              : "Sketch-to-reality generation failed"
+          );
         }
       }),
 
     generateTextToDesign: authedProcedure
-      .input(z.object({
-        prompt: z.string(),
-        aspectRatio: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          prompt: z.string(),
+          aspectRatio: z.string().optional(),
+        })
+      )
       .mutation(async ({ input, ctx }) => {
         try {
-          console.log('🎨 Starting text-to-design generation:', input);
+          console.log("🎨 Starting text-to-design generation:", input);
 
-          // Generate image using Replicate with Imagen-4-Fast model
-          const result = await ReplicateService.generateTextToDesign({
+          // Generate image using Gemini with Imagen model
+          const result = await GeminiService.generateTextToDesign({
             prompt: input.prompt,
             aspectRatio: input.aspectRatio || "1:1",
           });
 
           // Store in database if successful
-          if (result.status === 'completed' && result.imageUrl && ctx.user) {
-            const imageRecord = await db.insert(images).values({
-              userId: ctx.user.id,
-              originalImageUrl: '', // No original image for text-to-design
-              generatedImageUrl: result.imageUrl,
-              roomType: 'text-to-design',
-              style: 'custom',
-              aiPromptUsed: input.prompt,
-              resolution: '4K',
-            }).returning();
+          if (result.status === "completed" && result.imageUrl && ctx.user) {
+            const imageRecord = await db
+              .insert(images)
+              .values({
+                userId: ctx.user.id,
+                originalImageUrl: "", // No original image for text-to-design
+                generatedImageUrl: result.imageUrl,
+                roomType: "text-to-design",
+                style: "custom",
+                aiPromptUsed: input.prompt,
+                resolution: "4K",
+              })
+              .returning();
 
-            console.log('✅ Text-to-design image saved to database:', imageRecord[0]?.id);
+            console.log(
+              "✅ Text-to-design image saved to database:",
+              imageRecord[0]?.id
+            );
           }
 
           return {
@@ -225,86 +278,98 @@ export const appRouter = router({
             error: result.error,
             prompt: input.prompt,
           };
-
         } catch (error) {
-          console.error('❌ Text-to-design generation failed:', error);
-          throw new Error(error instanceof Error ? error.message : 'Text-to-design generation failed');
+          console.error("❌ Text-to-design generation failed:", error);
+          throw new Error(
+            error instanceof Error
+              ? error.message
+              : "Text-to-design generation failed"
+          );
         }
       }),
 
     uploadImage: authedProcedure
-      .input(z.object({
-        file: z.any(), // File object
-        filename: z.string(),
-      }))
+      .input(
+        z.object({
+          file: z.any(), // File object
+          filename: z.string(),
+        })
+      )
       .mutation(async ({ input }) => {
         try {
-          const imageUrl = await ReplicateService.uploadImageToBlob(input.file);
+          const imageUrl = await GeminiService.uploadImageToBlob(input.file);
           return { imageUrl };
         } catch (error) {
-          console.error('❌ Upload failed:', error);
-          throw new Error('Failed to upload image');
+          console.error("❌ Upload failed:", error);
+          throw new Error("Failed to upload image");
         }
       }),
 
     generateVideo: authedProcedure
-      .input(z.object({
-        imageUrl: z.string(),
-        effect: z.enum(['rotate180', 'zoomIn', 'zoomOut']),
-      }))
+      .input(
+        z.object({
+          imageUrl: z.string(),
+          effect: z.enum(["rotate180", "zoomIn", "zoomOut"]),
+        })
+      )
       .mutation(async ({ input }) => {
         // Luma AI system prompt based on selected effect
         let systemPrompt = "";
-        
+
         switch (input.effect) {
-          case 'rotate180':
-            systemPrompt = "Create a smooth 180-degree rotation video of this interior space. The camera should rotate smoothly around the room, showing the space from all angles. Focus on creating a cinematic, immersive experience that showcases the room's layout and design.";
+          case "rotate180":
+            systemPrompt =
+              "Create a smooth 180-degree rotation video of this interior space. The camera should rotate smoothly around the room, showing the space from all angles. Focus on creating a cinematic, immersive experience that showcases the room's layout and design.";
             break;
-          case 'zoomIn':
-            systemPrompt = "Create a smooth zoom-in animation video of this interior space. Start with a wide view and gradually zoom in to focus on specific details or areas of interest. The transition should be smooth and cinematic, creating a sense of depth and intimacy.";
+          case "zoomIn":
+            systemPrompt =
+              "Create a smooth zoom-in animation video of this interior space. Start with a wide view and gradually zoom in to focus on specific details or areas of interest. The transition should be smooth and cinematic, creating a sense of depth and intimacy.";
             break;
-          case 'zoomOut':
-            systemPrompt = "Create a smooth zoom-out animation video of this interior space. Start with a close-up view and gradually zoom out to reveal the full room. The transition should be smooth and cinematic, providing a comprehensive view of the entire space.";
+          case "zoomOut":
+            systemPrompt =
+              "Create a smooth zoom-out animation video of this interior space. Start with a close-up view and gradually zoom out to reveal the full room. The transition should be smooth and cinematic, providing a comprehensive view of the entire space.";
             break;
         }
 
         // Placeholder for Luma AI API call
-        console.log('Luma AI Prompt:', systemPrompt);
-        console.log('Image URL:', input.imageUrl);
-        console.log('Effect:', input.effect);
+        console.log("Luma AI Prompt:", systemPrompt);
+        console.log("Image URL:", input.imageUrl);
+        console.log("Effect:", input.effect);
 
         return {
           jobId: `luma-${Date.now()}`,
           videoUrl: `/api/video/${input.effect}-${Date.now()}.mp4`,
-          status: 'processing',
+          status: "processing",
           prompt: systemPrompt,
         };
       }),
   }),
-  
+
   favorites: router({
     getAll: authedProcedure.query(async () => {
-      return await db.select()
+      return await db
+        .select()
         .from(favorites)
         .leftJoin(images, eq(favorites.imageId, images.id));
     }),
-    
+
     add: authedProcedure
       .input(z.object({ imageId: z.string() }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) {
-          throw new Error('User not authenticated');
+          throw new Error("User not authenticated");
         }
         return await db.insert(favorites).values({
           userId: ctx.user.id,
           imageId: input.imageId,
         });
       }),
-      
+
     remove: authedProcedure
       .input(z.object({ imageId: z.string() }))
       .mutation(async ({ input }) => {
-        return await db.delete(favorites)
+        return await db
+          .delete(favorites)
           .where(eq(favorites.imageId, input.imageId));
       }),
   }),

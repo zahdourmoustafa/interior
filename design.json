@@ -1,0 +1,223 @@
+{
+    "designSystemProfile": {
+      "name": "Arch AI Dashboard",
+      "description": "A clean, modern, and minimalist design system for a web application dashboard. It features a light theme with a distinct purple accent, rounded corners, soft shadows, and a card-based layout for its primary tools.",
+      "style": {
+        "overall": "Minimalist, clean, spacious",
+        "theme": "Light",
+        "cornerRadius": "Medium (approx. 8px - 12px)",
+        "shadows": "Subtle, soft box-shadows on interactive elements like cards."
+      },
+      "colors": {
+        "background": {
+          "primary": "#F8F8FA",
+          "secondary": "#FFFFFF"
+        },
+        "text": {
+          "primary": "#1A1A1A",
+          "secondary": "#6C757D",
+          "onPrimary": "#FFFFFF",
+          "accent": "#6B5FD3"
+        },
+        "primary": {
+          "default": "#6B5FD3",
+          "light": "#EBE9F9"
+        },
+        "border": {
+          "default": "#EAECEF"
+        },
+        "status": {
+          "new": "#3498DB",
+          "pro": "#E74C3C"
+        }
+      },
+      "typography": {
+        "fontFamily": "Modern Sans-Serif (e.g., Inter, Manrope, SF Pro)",
+        "headings": {
+          "cardTitle": {
+            "fontSize": "18px",
+            "fontWeight": "600",
+            "color": "colors.text.primary"
+          }
+        },
+        "body": {
+          "default": {
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "1.5",
+            "color": "colors.text.secondary"
+          }
+        },
+        "labels": {
+          "default": {
+            "fontSize": "12px",
+            "fontWeight": "500",
+            "color": "colors.text.secondary"
+          },
+          "badge": {
+            "fontSize": "11px",
+            "fontWeight": "700",
+            "case": "uppercase"
+          }
+        },
+        "button": {
+          "fontSize": "14px",
+          "fontWeight": "500"
+        }
+      },
+      "spacing": {
+        "baseUnit": "8px",
+        "gridGap": "24px",
+        "padding": {
+          "card": "20px",
+          "button": "10px 20px"
+        }
+      },
+      "layout": {
+        "type": "Sidebar + Main Content",
+        "sidebar": {
+          "width": "240px",
+          "padding": "24px"
+        },
+        "mainContent": {
+          "padding": "32px",
+          "grid": {
+            "type": "CSS Grid",
+            "columns": "repeat(auto-fill, minmax(300px, 1fr))",
+            "gap": "24px"
+          }
+        }
+      },
+      "components": {
+        "sidebar": {
+          "style": {
+            "backgroundColor": "colors.background.secondary",
+            "borderRight": "1px solid colors.border.default",
+            "display": "flex",
+            "flexDirection": "column",
+            "justifyContent": "space-between"
+          },
+          "navItem": {
+            "style": {
+              "display": "flex",
+              "alignItems": "center",
+              "gap": "12px",
+              "padding": "10px 12px",
+              "borderRadius": "8px",
+              "iconSize": "20px"
+            },
+            "states": {
+              "default": {
+                "color": "colors.text.secondary",
+                "backgroundColor": "transparent"
+              },
+              "active": {
+                "color": "colors.primary.default",
+                "backgroundColor": "colors.primary.light",
+                "fontWeight": "600"
+              }
+            }
+          },
+          "bottomCTA": {
+              "style": {
+                  "backgroundColor": "colors.primary.light",
+                  "color": "colors.primary.default",
+                  "borderRadius": "8px",
+                  "padding": "16px",
+                  "textAlign": "left"
+              }
+          }
+        },
+        "card": {
+          "style": {
+            "backgroundColor": "colors.background.secondary",
+            "borderRadius": "12px",
+            "boxShadow": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
+            "overflow": "hidden",
+            "display": "flex",
+            "flexDirection": "column"
+          },
+          "structure": {
+            "imageContainer": {
+              "aspectRatio": "16/9",
+              "position": "relative",
+              "backgroundColor": "#F0F0F0"
+            },
+            "content": {
+              "padding": "20px",
+              "display": "flex",
+              "flexDirection": "column",
+              "flexGrow": "1"
+            },
+            "footer": {
+              "display": "flex",
+              "justifyContent": "space-between",
+              "alignItems": "center",
+              "padding": "0 20px 20px 20px",
+              "marginTop": "auto"
+            }
+          }
+        },
+        "button": {
+          "baseStyle": {
+            "padding": "10px 20px",
+            "borderRadius": "8px",
+            "fontWeight": "typography.button.fontWeight",
+            "display": "inline-flex",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "gap": "8px",
+            "border": "none",
+            "cursor": "pointer"
+          },
+          "variants": {
+            "primary": {
+              "backgroundColor": "colors.primary.default",
+              "color": "colors.text.onPrimary"
+            }
+          }
+        },
+        "badge": {
+          "baseStyle": {
+            "padding": "4px 8px",
+            "borderRadius": "6px",
+            "typography": "typography.labels.badge",
+            "color": "#FFFFFF"
+          },
+          "variants": {
+            "imageOverlay": {
+              "position": "absolute",
+              "top": "12px",
+              "right": "12px",
+              "backgroundColor": "rgba(0, 0, 0, 0.35)"
+            },
+            "inline": {
+              "display": "inline-block",
+              "marginLeft": "8px"
+            }
+          }
+        },
+        "toggleSwitch": {
+          "style": {
+            "width": "44px",
+            "height": "24px",
+            "borderRadius": "12px",
+            "position": "relative"
+          },
+          "states": {
+              "off": { "backgroundColor": "#EAECEF" },
+              "on": { "backgroundColor": "colors.primary.default" }
+          },
+          "thumb": {
+            "position": "absolute",
+            "top": "2px",
+            "left": "2px",
+            "size": "20px",
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "50%"
+          }
+        }
+      },
+      "notes": "The visual identity is built on clarity and ease of use. Interactive elements are clearly distinguished by the primary accent color. The layout is structured and predictable, using a consistent grid and card system. All photographic or illustrative content within the cards should be ignored, focusing only on the UI components themselves."
+    }
+  }

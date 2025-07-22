@@ -1,56 +1,76 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { FeatureCard } from '@/components/dashboard/feature-card';
-import { Palette, Image as ImageIcon, Video, Home } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 const features = [
   {
-    title: 'Redecoration AI',
-    description: 'Reimagine interiors with fresh color schemes, layouts, and styles powered by AI.',
-    icon: <Palette className="h-6 w-6" />,
+    title: 'Interior',
+    description: 'Turn any room into a beautiful interior. Upload a photo or choose a template, pick a style, and let AI do the rest.',
     href: '/dashboard/redecorate-room',
     backgroundImage: '/modern.webp',
-    features: ['Style Transfer', 'Texture Synthesis', 'Color Harmonization'],
+    minutes: 1,
+    generation: 1
   },
   {
-    title: 'Moodboard AI',
-    description: 'Upload a moodboard and your room photo to instantly harmonize colors—preview, tweak with a slider, and download.',
-    icon: <ImageIcon className="h-6 w-6" />,
-    href: '/dashboard/sketch-to-reality',
+    title: 'Exterior',
+    description: 'Redesign your exterior in seconds. Just upload a photo or sketch and see the magic in action.',
+    href: '/dashboard/redesign-exterior',
     backgroundImage: '/professional.webp',
-    features: ['Dynamic Lighting', 'Time-of-day Shades', 'colors—preview'],
+    minutes: 1,
+    generation: 1
   },
   {
-    title: 'Staging Master AI',
-    description: 'Stage properties virtually for real estate marketing with AI-driven furniture placement.',
-    icon: <Home className="h-6 w-6" />,
-    href: '/dashboard/redesign-exterior',
-    backgroundImage: '/neoclassic.webp',
-    features: ['3D Generation', 'Structural Analysis', 'Form Optimization'],
-  },
-  {
-    title: 'Sketch AI',
-    description: 'Transform rough sketches into refined architectural designs using advanced AI.',
-    icon: <Video className="h-6 w-6" />,
-    href: '/dashboard/generate-videos',
-    backgroundImage: '/summer.webp',
-    features: ['Plant Selection', 'Terrain Modeling', 'Water Features'],
-  },
-  {
-    title: 'Design from Text AI',
-    description: 'Generate entire designs from text prompts in seconds using cutting-edge AI.',
-    icon: <ImageIcon className="h-6 w-6" />,
+    title: 'Sketch',
+    description: 'Transform your sketch into a beautiful image. Upload your draft, select a style, and let AI create the final design.',
     href: '/dashboard/sketch-to-reality',
-    backgroundImage: '/coastal.webp',
-    features: ['4K Resolution', 'Lighting Enhancement', 'Material Optimization'],
+    backgroundImage: '/neoclassic.webp',
+    minutes: 1,
+    generation: 1,
+    badgeText: 'Image'
   },
   {
-    title: 'Product Staging',
-    description: 'Visualize furniture arrangements in real time with photorealistic AI rendering.',
-    icon: <Home className="h-6 w-6" />,
-    href: '/dashboard/redesign-exterior',
+    title: 'Landscape',
+    description: 'Redesign your landscape with over 15 different styles to choose from.',
+    href: '/dashboard/landscape',
+    backgroundImage: '/summer.webp',
+    minutes: 1,
+    generation: 1
+  },
+  {
+    title: 'Magic Edit',
+    description: 'Easily transform your scene with simple text descriptions. See the results in seconds.',
+    href: '/dashboard/magic-edit',
+    backgroundImage: '/coastal.webp',
+    minutes: 2,
+    generation: 1,
+    badgeText: 'NEW',
+    badgeVariant: 'new'
+  },
+  {
+    title: 'Style Transfer',
+    description: 'Instantly apply amazing design styles to your interiors and exteriors.',
+    href: '/dashboard/style-transfer',
     backgroundImage: '/vintage.webp',
-    features: ['Texture Generation', 'PBR Materials', 'Custom Patterns'],
+    minutes: 1,
+    generation: 1,
+    badgeText: 'PRO',
+    badgeVariant: 'pro'
+  },
+  {
+    title: 'Virtual Staging',
+    description: 'Reimagine your home with AI. Upload a photo, select a style, and transform your interiors instantly.',
+    href: '/dashboard/virtual-staging',
+    backgroundImage: '/tropical.webp',
+    minutes: 1,
+    generation: 1
+  },
+  {
+    title: 'Enhance',
+    description: 'Easily make images and improve their quality by reducing noise and enhancing details. Perfect for all your design needs.',
+    href: '/dashboard/enhance',
+    backgroundImage: '/industrial.webp',
+    minutes: 1,
+    generation: 1
   },
 ];
 
@@ -58,24 +78,19 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <ErrorBoundary>
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome to InteriorAI Pro</h1>
-            <p className="text-muted-foreground">
-              Choose a feature to start transforming your spaces with AI
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-[#F8F8FA] min-h-screen p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
               <FeatureCard
                 key={feature.title}
                 title={feature.title}
                 description={feature.description}
-                icon={feature.icon}
                 href={feature.href}
                 backgroundImage={feature.backgroundImage}
-                features={feature.features}
+                minutes={feature.minutes}
+                generation={feature.generation}
+                badgeText={feature.badgeText}
+                badgeVariant={feature.badgeVariant as "new" | "pro" | undefined}
               />
             ))}
           </div>
