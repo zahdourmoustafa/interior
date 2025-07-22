@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { trpc } from "@/lib/trpc";
 
 export default function TextToDesignPage() {
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [loadingToastId, setLoadingToastId] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export default function TextToDesignPage() {
   const generateMutation = trpc.images.generateTextToDesign.useMutation({
     onSuccess: (data) => {
       if (data.generatedImageUrl) {
-        setGeneratedImage(data.generatedImageUrl);
+        setGeneratedImages([data.generatedImageUrl]);
         if (loadingToastId) {
           toast.dismiss(loadingToastId);
         }
@@ -38,7 +38,7 @@ export default function TextToDesignPage() {
   });
 
   const handleImageRemove = () => {
-    setGeneratedImage(null);
+    setGeneratedImages([]);
     toast.success("Image removed. You can generate a new design.");
   };
 
@@ -55,7 +55,6 @@ export default function TextToDesignPage() {
     try {
       await generateMutation.mutateAsync({
         prompt: prompt.trim(),
-        aspectRatio: "16:9",
       });
     } catch (error) {
       console.error("Generation error:", error);
@@ -69,17 +68,13 @@ export default function TextToDesignPage() {
         <div className="flex-1 p-6">
           <MainImageDisplay
             selectedImage={null}
-            generatedImage={generatedImage}
+            generatedImages={generatedImages}
             isGenerating={isGenerating}
+            generatingSlot={null}
             onImageUpload={() => {}} // No-op function since we don't upload
             onImageRemove={handleImageRemove}
-            showCompareButton={false}
+            onRemoveGeneratedImage={() => setGeneratedImages([])}
             showUploadArea={false}
-            uploadText={{
-              title: "Your generated design will appear here",
-              description: "Enter a description and click generate to create your design",
-              placeholder: "Supports JPG, PNG, WebP up to 10MB"
-            }}
           />
         </div>
         <ControlSidebar

@@ -1,6 +1,7 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import { put } from "@vercel/blob";
 import mime from "mime";
+import { furnishEmptySpaceSystemPrompt } from "./prompts/furnish-prompt";
 
 // Initialize Google AI with proper error handling
 const getGoogleAI = () => {
@@ -54,8 +55,8 @@ function getMimeTypeFromUrl(url: string): string {
 
 export interface GenerateImageInput {
   imageUrl: string;
-  roomType: string;
-  designStyle: string;
+  roomType?: string;
+  designStyle?: string;
   prompt?: string;
 }
 
@@ -111,7 +112,7 @@ export class GeminiService {
             {
               text:
                 input.prompt ||
-                this.generateDefaultPrompt(input.roomType, input.designStyle),
+                this.generateDefaultPrompt(input.roomType!, input.designStyle!),
             },
           ],
         },
@@ -343,6 +344,100 @@ export class GeminiService {
     }
   }
 
+  static async furnishEmptySpace(
+    input: GenerateImageInput
+  ): Promise<GenerateImageOutput> {
+    try {
+      console.log("🛋️ Starting empty space furnishing with Gemini:", {
+        imageUrl: input.imageUrl.substring(0, 50) + "...",
+        prompt: input.prompt,
+      });
+
+      const ai = getGoogleAI();
+
+      const imagePart = await urlToGenerativePart(
+        input.imageUrl,
+        getMimeTypeFromUrl(input.imageUrl)
+      );
+
+      const config = {
+        responseModalities: ["IMAGE", "TEXT"],
+        responseMimeType: "text/plain",
+      };
+
+      const generationConfig = {
+        quality: "hd",
+        responseMimeType: "image/png",
+        temperature: 0.5,
+        negativePrompt: [
+          "blurry, grainy, low-resolution, unrealistic, cartoonish, discolored, watermark, signature, text",
+        ],
+      };
+
+      const model = this.IMAGE_GENERATION_MODEL;
+      const fullPrompt = `${furnishEmptySpaceSystemPrompt}\n\nUser Prompt: "${input.prompt}"`;
+      
+      const contents = [
+        {
+          role: "user",
+          parts: [
+            imagePart,
+            {
+              text: fullPrompt,
+            },
+          ],
+        },
+      ];
+
+      const response = await ai.models.generateContentStream({
+        model,
+        config,
+        generationConfig,
+        contents,
+      });
+
+      for await (const chunk of response) {
+        if (
+          !chunk.candidates ||
+          !chunk.candidates[0].content ||
+          !chunk.candidates[0].content.parts
+        ) {
+          continue;
+        }
+        if (chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
+          const inlineData = chunk.candidates[0].content.parts[0].inlineData;
+          const imageBytes = Buffer.from(inlineData.data || "", "base64");
+          const blob = await put(
+            `gemini-furnished-${Date.now()}.jpg`,
+            imageBytes,
+            {
+              access: "public",
+              token: process.env.BLOB_READ_WRITE_TOKEN!,
+            }
+          );
+
+          console.log("✅ Gemini furnishing completed:", blob.url);
+
+          return {
+            jobId: `gemini_furnished_${Date.now()}`,
+            imageUrl: blob.url,
+            status: "completed",
+          };
+        }
+      }
+
+      throw new Error("No images generated from Gemini");
+    } catch (error) {
+      console.error("❌ Gemini furnishing failed:", error);
+      return {
+        jobId: `gemini_furnished_failed_${Date.now()}`,
+        status: "failed",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
   private static generateDefaultPrompt(
     roomType: string,
     designStyle: string
@@ -409,46 +504,58 @@ Do not add, remove, or change the position of any furniture or architectural ele
   ): string {
     const roomPrompts = {
       "living-room":
-        "living room with comfortable seating, coffee table, and ambient lighting",
+        "a welcoming living room with comfortable seating, a central coffee table, and layered ambient lighting",
       bedroom:
-        "bedroom with a comfortable bed,. nightstands, and relaxing atmosphere",
+        "a serene bedroom with a well-made bed, matching nightstands, and a relaxing, uncluttered atmosphere",
       kitchen:
-        "kitchen with modern appliances, countertops, and functional layout",
+        "a modern kitchen with high-end appliances, sleek countertops, and a highly functional and ergonomic layout",
       "dining-room":
-        "dining room with dining table, chairs, and elegant atmosphere",
+        "an elegant dining room with a statement dining table, comfortable chairs, and sophisticated lighting",
       "home-office":
-        "home office with desk, chair, and productive workspace setup",
-      "bath-room": "bathroom with fixtures, vanity, and clean modern design",
-      "game-room": "game room with entertainment setup and comfortable seating",
+        "a productive home office with an ergonomic desk and chair, ample storage, and focused task lighting",
+      "bath-room":
+        "a clean and modern bathroom with premium fixtures, a stylish vanity, and spa-like qualities",
+      "game-room":
+        "an immersive game room with a large screen entertainment setup, comfortable seating, and atmospheric lighting",
       "kids-room":
-        "kids room with playful elements, storage, and child-friendly furniture",
+        "a playful and organized kids' room with creative furniture, smart storage solutions, and child-friendly materials",
     };
 
     const stylePrompts = {
       scandinavian:
-        "Scandinavian style with light wood, neutral colors, minimalist furniture, and natural textures",
+        "a Scandinavian style characterized by light-colored woods, a neutral color palette, minimalist yet cozy furniture, and an abundance of natural textures",
       christmas:
-        "Christmas themed with warm colors, festive decorations, cozy lighting, and holiday elements",
+        "a festive Christmas theme with warm, inviting colors, elegant holiday decorations, cozy ambient lighting, and classic holiday motifs",
       japanese:
-        "Japanese style with clean lines, natural materials, zen elements, and minimalist aesthetic",
+        "a Japanese style emphasizing clean lines, natural materials like bamboo and rice paper, Zen principles of simplicity, and a minimalist aesthetic",
       eclectic:
-        "Eclectic style with mixed patterns, vibrant colors, unique furniture pieces, and artistic elements",
+        "an Eclectic style featuring a curated mix of patterns, vibrant and bold colors, unique and contrasting furniture pieces, and artistic, expressive elements",
       minimalist:
-        "Minimalist style with clean lines, neutral palette, simple furniture, and uncluttered space",
+        "a Minimalist style defined by ultra-clean lines, a strict neutral color palette, simple geometric forms, and a completely uncluttered and serene space",
       futuristic:
-        "Futuristic style with sleek surfaces, modern technology, LED lighting, and contemporary materials",
+        "a Futuristic style with sleek, aerodynamic surfaces, integrated smart technology, dynamic LED lighting, and advanced composite materials",
       bohemian:
-        "Bohemian style with rich textures, warm colors, plants, and eclectic decorative elements",
+        "a Bohemian style that is rich in textures, warm and earthy colors, an abundance of plants, and an eclectic collection of global-inspired decorative items",
       parisian:
-        "Parisian style with elegant furniture, classic details, sophisticated colors, and refined atmosphere",
+        "a Parisian style showcasing elegant, ornate furniture, classic architectural details, a sophisticated and muted color scheme, and a refined, timeless atmosphere",
     };
 
     const roomDesc =
-      roomPrompts[roomType as keyof typeof roomPrompts] || "interior space";
+      roomPrompts[roomType as keyof typeof roomPrompts] || "an interior space";
     const styleDesc =
-      stylePrompts[designStyle as keyof typeof stylePrompts] || "modern style";
+      stylePrompts[designStyle as keyof typeof stylePrompts] || "a modern style";
 
-    return `Transform this sketch of a ${roomDesc} into a photorealistic image in a ${styleDesc}. The space should be well-lit with natural light, professionally photographed, high-resolution, 8K quality, photorealistic, detailed textures, perfect lighting, and showcase excellent interior design principles with attention to color harmony, furniture placement, and overall aesthetic appeal. Ultra-detailed, sharp focus, professional interior photography.`;
+    return `Your task is to act as a photorealistic rendering engine. You will receive a line-art sketch of a room and your job is to transform it into a photorealistic, 8K image. Your output must be a high-quality, professional photograph of a real-world interior.
+
+**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL SKETCH'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input sketch.**
+
+With the camera position locked, you will then render the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:
+- Textures and materials (e.g., wood, metal, fabric)
+- Colors and color palette
+- Lighting (e.g., ambient, task, natural)
+- Decorative objects (e.g., pillows, vases, art)
+
+Do not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
   }
 
   static async uploadImageToBlob(file: File): Promise<string> {

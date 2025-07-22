@@ -124,6 +124,59 @@ The prompt should focus on transforming sketch elements into realistic interior 
     }
   }
 
+  static async generateExteriorRedesignPrompt(input: { designStyle: string; additionalContext?: string; }): Promise<string> {
+    if (!openai) {
+      console.log('🔄 OpenAI API key not configured, using fallback exterior redesign prompt');
+      return this.getFallbackExteriorRedesignPrompt(input.designStyle);
+    }
+
+    try {
+      const systemPrompt = `You are an expert architect and AI prompt engineer. Your task is to create detailed, specific prompts for AI image generation that will produce high-quality, realistic building exterior redesigns.
+
+Guidelines:
+- Create prompts that are descriptive and specific to architectural elements.
+- Focus on materials (brick, wood, glass, metal), architectural style, landscaping, lighting, and overall composition.
+- Ensure the prompt matches the design style exactly.
+- Include details about windows, doors, roofing, and other structural features.
+- Aim for photorealistic, professionally designed exteriors.
+- Keep prompts between 100-200 words.
+- Avoid mentioning people, text, or watermarks.
+- Always include quality keywords: "8K quality", "photorealistic", "ultra-detailed", "sharp focus", "professional architectural photography".
+- Emphasize natural lighting (e.g., "golden hour lighting"), weather, and seasonal context for better visual quality.
+- Include specific design elements that match the chosen style.`;
+
+      const userPrompt = `Create a detailed prompt for generating a ${input.designStyle} style building exterior redesign.
+      
+Design Style: ${input.designStyle}
+${input.additionalContext ? `Additional Context: ${input.additionalContext}` : ''}
+
+The prompt should describe a complete, well-designed building exterior that perfectly showcases the specified style.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      });
+
+      const generatedPrompt = completion.choices[0]?.message?.content?.trim();
+      
+      if (!generatedPrompt) {
+        throw new Error('Failed to generate exterior redesign prompt');
+      }
+
+      console.log('🤖 Generated exterior redesign prompt:', generatedPrompt);
+      return generatedPrompt;
+
+    } catch (error) {
+      console.error('❌ OpenAI exterior redesign prompt generation failed:', error);
+      return this.getFallbackExteriorRedesignPrompt(input.designStyle);
+    }
+  }
+
   private static getFallbackPrompt(roomType: string, designStyle: string): string {
     const roomDescriptions = {
       'living-room': 'living room with comfortable seating arrangement, coffee table, ambient lighting, and welcoming atmosphere',
@@ -180,5 +233,22 @@ The prompt should focus on transforming sketch elements into realistic interior 
     const styleDesc = styleDescriptions[designStyle as keyof typeof styleDescriptions] || `${designStyle} style design`;
 
     return `A professionally designed ${roomDesc} showcasing ${styleDesc}. The space features high-quality furnishings, excellent natural and artificial lighting, perfect color coordination, and attention to detail. The design should be photorealistic, well-composed, and demonstrate superior interior design principles with a focus on functionality and aesthetic appeal.`;
+  }
+
+  private static getFallbackExteriorRedesignPrompt(designStyle: string): string {
+    const styleDescriptions = {
+      'scandinavian': 'Scandinavian architectural design with light wood siding, large windows, a neutral color palette, and a focus on natural light and minimalism.',
+      'christmas': 'A building exterior with a Christmas-themed design, featuring festive decorations, warm lighting, snow-covered roof, and a welcoming holiday atmosphere.',
+      'japanese': 'Japanese architectural design with clean lines, natural wood elements, a tile roof, shoji-style windows, and a serene, zen-like garden.',
+      'eclectic': 'An eclectic building exterior that blends different architectural styles, materials, and colors to create a unique and artistic look.',
+      'minimalist': 'A minimalist building exterior with a simple geometric form, a monochromatic color scheme, and a focus on clean lines and uncluttered surfaces.',
+      'futuristic': 'A futuristic building exterior with sleek curves, metallic surfaces, large glass panels, and innovative, high-tech architectural features.',
+      'bohemian': 'A bohemian-style building exterior with warm, earthy colors, natural materials like stucco and wood, and a variety of plants and textures.',
+      'parisian': 'A Parisian-style building with a mansard roof, wrought-iron balconies, and elegant, classic architectural details.'
+    };
+
+    const styleDesc = styleDescriptions[designStyle as keyof typeof styleDescriptions] || `${designStyle} style architectural design`;
+
+    return `A photorealistic, high-resolution image of a building exterior in a ${styleDesc}. The image should showcase the building's architectural features, materials, and landscaping in a visually appealing way. The lighting should be natural and flattering, and the overall composition should be well-balanced and professional.`;
   }
 }

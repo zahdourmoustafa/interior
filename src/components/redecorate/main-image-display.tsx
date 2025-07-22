@@ -17,6 +17,7 @@ interface MainImageDisplayProps {
   onImageUpload: (file: File) => void;
   onImageRemove: () => void;
   onRemoveGeneratedImage: (index: number) => void;
+  showUploadArea?: boolean;
 }
 
 // A sub-component for each slot in the grid
@@ -28,6 +29,7 @@ function ImageSlot({
   onRemove,
   slotType = 'generated',
   slotIndex,
+  showUploadArea = true,
 }: {
   imageUrl: string | null;
   originalImageUrl?: string | null;
@@ -36,6 +38,7 @@ function ImageSlot({
   onRemove?: () => void;
   slotType?: 'upload' | 'generated';
   slotIndex?: number;
+  showUploadArea?: boolean;
 }) {
   const [dragActive, setDragActive] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -82,7 +85,7 @@ function ImageSlot({
     }
   };
 
-  const canUpload = slotType === 'upload';
+  const canUpload = slotType === 'upload' && showUploadArea;
 
   return (
     <>
@@ -157,6 +160,7 @@ export function MainImageDisplay({
   onImageUpload,
   onImageRemove,
   onRemoveGeneratedImage,
+  showUploadArea = true,
 }: MainImageDisplayProps) {
 
   const slots = [0, 1, 2, 3];
@@ -173,6 +177,7 @@ export function MainImageDisplay({
         onRemove={generatedImages.length > 0 ? () => onRemoveGeneratedImage(0) : onImageRemove}
         slotType={generatedImages.length > 0 ? "generated" : "upload"}
         slotIndex={0}
+        showUploadArea={showUploadArea}
       />
 
       {/* Other slots */}

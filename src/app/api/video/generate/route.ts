@@ -47,8 +47,22 @@ export async function POST(request: NextRequest) {
     // Upload image to Neon and get public URL
     const imageUrl = await uploadImageToNeon(imageFile);
 
-    // Generate video using Luma AI with image-to-video
-    const aiPrompt = effect === 'arcAroundObject' ? 'Create a video with a smooth camera arc/circular pan around the object from left to right' : `Transform this image with ${effect} effect`;
+    // Generate video using Luma AI with image-to-video - strict preservation prompts
+    let aiPrompt: string;
+    
+    switch (effect) {
+      case 'arcAroundObject':
+        aiPrompt = 'CRITICAL: This is a camera movement only - do not change, add, or remove any objects, furniture, or room elements. Use the provided image as the exact starting frame. Create a smooth camera arc that moves around the existing room while keeping every single object (bed, couch, tables, decor) in exactly the same position. The room layout, furniture placement, and all objects must remain completely unchanged. Only the camera perspective should shift in a gentle arc motion, maintaining the same room and objects throughout.';
+        break;
+      case 'zoomIn':
+        aiPrompt = 'CRITICAL: This is a camera movement only - do not change, add, or remove any objects, furniture, or room elements. Use the provided image as the exact starting frame. Create a smooth camera zoom-in movement while keeping every single object (bed, couch, tables, decor) in exactly the same position. The room layout, furniture placement, and all objects must remain completely unchanged. Only the camera should move closer to the scene, maintaining the same room and objects throughout.';
+        break;
+      case 'zoomOut':
+        aiPrompt = 'CRITICAL: This is a camera movement only - do not change, add, or remove any objects, furniture, or room elements. Use the provided image as the exact starting frame. Create a smooth camera zoom-out movement while keeping every single object (bed, couch, tables, decor) in exactly the same position. The room layout, furniture placement, and all objects must remain completely unchanged. Only the camera should move further from the scene, maintaining the same room and objects throughout.';
+        break;
+      default:
+        aiPrompt = `Use the provided image as the exact starting frame. Create a ${effect} camera movement while preserving every object, furniture piece, and room element exactly as shown. Do not modify, add, or remove anything from the original scene.`;
+    }
 
     const generation = await client.generations.create({
       model: "ray-1-6",

@@ -29,9 +29,9 @@ const features = [
     badgeText: 'Image'
   },
   {
-    title: 'Landscape',
-    description: 'Redesign your landscape with over 15 different styles to choose from.',
-    href: '/dashboard/landscape',
+    title: 'Furnish Empty Space',
+    description: 'Upload an image of an empty room and let AI furnish it for you.',
+    href: '/dashboard/furnish-empty-space',
     backgroundImage: '/summer.webp',
     minutes: 1,
     generation: 1

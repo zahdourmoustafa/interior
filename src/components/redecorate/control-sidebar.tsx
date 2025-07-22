@@ -165,6 +165,8 @@ interface ControlSidebarProps {
   prompt?: string;
   onPromptChange?: (prompt: string) => void;
   promptPlaceholder?: string;
+  onReset?: () => void;
+  isResettable?: boolean;
 }
 
 export function ControlSidebar({
@@ -179,6 +181,8 @@ export function ControlSidebar({
   prompt,
   onPromptChange,
   promptPlaceholder = "Describe your design...",
+  onReset,
+  isResettable,
 }: ControlSidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
     roomType: true,
@@ -293,7 +297,16 @@ export function ControlSidebar({
       )}
 
       {/* Generate Button */}
-      <div className="mt-auto p-4">
+      <div className="mt-auto p-4 space-y-2">
+        {isResettable && onReset && (
+          <Button
+            onClick={onReset}
+            variant="outline"
+            className="w-full"
+          >
+            Reset to Original
+          </Button>
+        )}
         <Button
           onClick={onGenerate}
           disabled={isGenerating || (showRoomType && !selectedRoomType) || (prompt !== undefined && !prompt?.trim())}

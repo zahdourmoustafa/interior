@@ -5,6 +5,7 @@ import { images, favorites, users } from "../db/schema";
 import { eq, desc } from "drizzle-orm";
 import { validateImageFile } from "./upload";
 import { GeminiService } from "../ai/gemini-service";
+import { ImagenService } from "../ai/imagen-service";
 import { PromptGenerator } from "../ai/prompt-generator";
 import type { User } from "../db/schema";
 
@@ -159,6 +160,61 @@ export const appRouter = router({
         }
       }),
 
+    generateRedesignExterior: authedProcedure
+      .input(
+        z.object({
+          originalImageUrl: z.string(),
+          designStyle: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          console.log("🏡 Starting exterior redesign generation:", input);
+
+          // Generate dynamic prompt for exterior redesign
+          const dynamicPrompt = await PromptGenerator.generateExteriorRedesignPrompt({
+            designStyle: input.designStyle,
+          });
+
+          // Generate image using Gemini
+          const result = await GeminiService.generateInteriorDesign({ // This can be a generic image generator
+            imageUrl: input.originalImageUrl,
+            prompt: dynamicPrompt,
+          });
+
+          // Store in database if successful
+          if (result.status === "completed" && result.imageUrl && ctx.user) {
+            const imageRecord = await db
+              .insert(images)
+              .values({
+                userId: ctx.user.id,
+                originalImageUrl: input.originalImageUrl,
+                generatedImageUrl: result.imageUrl,
+                roomType: "exterior", // Using "exterior" as roomType
+                style: input.designStyle,
+                aiPromptUsed: dynamicPrompt,
+                resolution: "4K",
+              })
+              .returning();
+
+            console.log("✅ Exterior redesign image saved to database:", imageRecord[0]?.id);
+          }
+
+          return {
+            jobId: result.jobId,
+            generatedImageUrl: result.imageUrl,
+            status: result.status,
+            error: result.error,
+            prompt: dynamicPrompt,
+          };
+        } catch (error) {
+          console.error("❌ Exterior redesign generation failed:", error);
+          throw new Error(
+            error instanceof Error ? error.message : "Exterior redesign generation failed"
+          );
+        }
+      }),
+
     generateSketchToReality: authedProcedure
       .input(
         z.object({
@@ -237,43 +293,41 @@ export const appRouter = router({
       .input(
         z.object({
           prompt: z.string(),
-          aspectRatio: z.string().optional(),
+          numberOfImages: z.number().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
         try {
           console.log("🎨 Starting text-to-design generation:", input);
 
-          // Generate image using Gemini with Imagen model
-          const result = await GeminiService.generateTextToDesign({
+          // Generate image using Imagen 2
+          const result = await ImagenService.generateTextToDesign({
             prompt: input.prompt,
-            aspectRatio: input.aspectRatio || "1:1",
+            numberOfImages: input.numberOfImages || 1,
           });
 
           // Store in database if successful
-          if (result.status === "completed" && result.imageUrl && ctx.user) {
-            const imageRecord = await db
-              .insert(images)
-              .values({
+          if (result.status === "completed" && result.imageUrls.length > 0 && ctx.user) {
+            for (const imageUrl of result.imageUrls) {
+              await db.insert(images).values({
                 userId: ctx.user.id,
                 originalImageUrl: "", // No original image for text-to-design
-                generatedImageUrl: result.imageUrl,
+                generatedImageUrl: imageUrl,
                 roomType: "text-to-design",
                 style: "custom",
                 aiPromptUsed: input.prompt,
                 resolution: "4K",
-              })
-              .returning();
+              });
+            }
 
             console.log(
-              "✅ Text-to-design image saved to database:",
-              imageRecord[0]?.id
+              `✅ ${result.imageUrls.length} text-to-design images saved to database.`
             );
           }
 
           return {
             jobId: result.jobId,
-            generatedImageUrl: result.imageUrl,
+            generatedImageUrl: result.imageUrls[0], // Return the first image for now
             status: result.status,
             error: result.error,
             prompt: input.prompt,
@@ -284,6 +338,48 @@ export const appRouter = router({
             error instanceof Error
               ? error.message
               : "Text-to-design generation failed"
+          );
+        }
+      }),
+
+    furnishEmptySpace: authedProcedure
+      .input(
+        z.object({
+          imageUrl: z.string(),
+          prompt: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          console.log("🛋️ Starting empty space furnishing:", input);
+
+          const result = await GeminiService.furnishEmptySpace({
+            imageUrl: input.imageUrl,
+            prompt: input.prompt,
+          });
+
+          if (result.status === "completed" && result.imageUrl && ctx.user) {
+            await db.insert(images).values({
+              userId: ctx.user.id,
+              originalImageUrl: input.imageUrl,
+              generatedImageUrl: result.imageUrl,
+              roomType: "furnish-empty-space",
+              style: "custom",
+              aiPromptUsed: input.prompt,
+              resolution: "4K",
+            });
+          }
+
+          return {
+            generatedImageUrl: result.imageUrl,
+            status: result.status,
+          };
+        } catch (error) {
+          console.error("❌ Furnishing empty space failed:", error);
+          throw new Error(
+            error instanceof Error
+              ? error.message
+              : "Furnishing empty space failed"
           );
         }
       }),

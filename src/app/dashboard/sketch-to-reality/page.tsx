@@ -12,10 +12,11 @@ export default function SketchToRealityPage() {
   // State management
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedRoomType, setSelectedRoomType] = useState<string | null>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
 
   // Handlers
   const handleStyleSelect = (styleId: string) => {
@@ -63,15 +64,25 @@ export default function SketchToRealityPage() {
 
   const handleImageRemove = () => {
     setSelectedImage(null);
-    setGeneratedImage(null);
+    setGeneratedImages([]);
     toast.success('Sketch removed. You can upload a new sketch.');
+  };
+
+  const handleRemoveGeneratedImage = (index: number) => {
+    setGeneratedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   // tRPC mutation for image generation
   const generateMutation = trpc.images.generateSketchToReality.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.generatedImageUrl) {
-        setGeneratedImage(data.generatedImageUrl);
+        setGeneratedImages(prev => {
+          const newImages = [...prev];
+          if (generatingSlot !== null) {
+            newImages[generatingSlot] = data.generatedImageUrl!;
+          }
+          return newImages;
+        });
         toast.success('🏠 Your realistic design has been generated successfully!');
         console.log('✅ Sketch-to-reality generation completed successfully');
       } else if (data.error) {
@@ -85,6 +96,7 @@ export default function SketchToRealityPage() {
     },
     onSettled: () => {
       setIsGenerating(false);
+      setGeneratingSlot(null);
     }
   });
 
@@ -105,8 +117,15 @@ export default function SketchToRealityPage() {
       return;
     }
 
+    const nextSlot = generatedImages.length;
+    if (nextSlot >= 4) {
+      toast.error("All image slots are full. Please remove one to generate a new design.");
+      return;
+    }
+
     setIsGenerating(true);
-    toast.loading('🏠 Converting your sketch to reality... This may take 30-60 seconds');
+    setGeneratingSlot(nextSlot);
+    toast.loading(`🏠 Converting your sketch to reality in slot ${nextSlot + 1}... This may take 30-60 seconds`);
     
     console.log('🏠 Starting sketch-to-reality generation with:', {
       roomType: selectedRoomType,
@@ -135,15 +154,12 @@ export default function SketchToRealityPage() {
         <div className="flex-1 p-6">
           <MainImageDisplay
             selectedImage={selectedImage}
-            generatedImage={generatedImage}
+            generatedImages={generatedImages}
             isGenerating={isGenerating}
+            generatingSlot={generatingSlot}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
-            uploadText={{
-              title: "Upload your sketch",
-              description: "Drag and drop your hand-drawn sketch here, or click to select",
-              placeholder: "Supports JPG, PNG, WebP up to 10MB"
-            }}
+            onRemoveGeneratedImage={handleRemoveGeneratedImage}
           />
         </div>
         

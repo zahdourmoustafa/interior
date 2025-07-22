@@ -1,11 +1,11 @@
 // Main AI service exports
-export { ReplicateService } from './replicate-service';
+export { GeminiService } from './gemini-service';
 export { PromptGenerator } from './prompt-generator';
 
 export type {
   GenerateImageInput,
   GenerateImageOutput
-} from './replicate-service';
+} from './gemini-service';
 
 export type {
   PromptGenerationInput
