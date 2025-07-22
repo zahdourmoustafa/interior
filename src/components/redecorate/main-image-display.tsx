@@ -3,239 +3,189 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Upload, Heart, Download, Maximize2, RotateCcw, Split, X } from 'lucide-react';
+import { Upload, Download, Maximize2, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { ImageComparisonSlider } from './image-comparison-slider';
 import { toast } from 'sonner';
+import { ImageDialog } from '@/components/ui/image-dialog';
 
 interface MainImageDisplayProps {
   selectedImage: string | null;
-  generatedImage: string | null;
+  generatedImages: string[];
   isGenerating: boolean;
+  generatingSlot: number | null;
   onImageUpload: (file: File) => void;
-  onImageRemove?: () => void;
-  uploadText?: {
-    title: string;
-    description: string;
-    placeholder: string;
-  };
-  showCompareButton?: boolean;
-  showUploadArea?: boolean;
+  onImageRemove: () => void;
+  onRemoveGeneratedImage: (index: number) => void;
 }
 
-export function MainImageDisplay({ 
-  selectedImage, 
-  generatedImage, 
+// A sub-component for each slot in the grid
+function ImageSlot({
+  imageUrl,
+  originalImageUrl,
   isGenerating,
-  onImageUpload,
-  onImageRemove,
-  uploadText,
-  showCompareButton = true,
-  showUploadArea = true
-}: MainImageDisplayProps) {
+  onUpload,
+  onRemove,
+  slotType = 'generated',
+  slotIndex,
+}: {
+  imageUrl: string | null;
+  originalImageUrl?: string | null;
+  isGenerating?: boolean;
+  onUpload?: (file: File) => void;
+  onRemove?: () => void;
+  slotType?: 'upload' | 'generated';
+  slotIndex?: number;
+}) {
   const [dragActive, setDragActive] = useState(false);
-  const [showComparison, setShowComparison] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    else if (e.type === 'dragleave') setDragActive(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      onImageUpload(e.dataTransfer.files[0]);
+    if (onUpload && e.dataTransfer.files && e.dataTransfer.files[0]) {
+      onUpload(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      onImageUpload(e.target.files[0]);
+    if (onUpload && e.target.files && e.target.files[0]) {
+      onUpload(e.target.files[0]);
     }
-  };
-
-  const handleBeforeAfterToggle = () => {
-    if (selectedImage && generatedImage) {
-      setShowComparison(!showComparison);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    if (onImageRemove) {
-      onImageRemove();
-    }
-    setShowComparison(false);
-  };
-
-  const handleLike = () => {
-    toast.success("Added to favorites!");
   };
 
   const handleDownload = async () => {
-    if (!displayImage) return;
-    
+    if (!imageUrl) return;
     try {
-      const response = await fetch(displayImage);
+      const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `interior-design-${Date.now()}.jpg`;
+      a.download = `interior-design-${Date.now()}-${slotIndex}.jpg`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success("Image downloaded successfully!");
+      toast.success('Image downloaded successfully!');
     } catch (error) {
-      console.error("Download failed:", error);
-      toast.error("Failed to download image");
+      console.error('Download failed:', error);
+      toast.error('Failed to download image');
     }
   };
 
-  const handleExpand = () => {
-    if (!displayImage) return;
-    setShowImageModal(true);
-  };
-
-  const displayImage = generatedImage || selectedImage;
-  const canShowComparison = selectedImage && generatedImage;
-
-  // Default upload text
-  const defaultUploadText = {
-    title: "Upload your room image",
-    description: "Drag and drop an image here, or click to select",
-    placeholder: "Supports JPG, PNG, WebP up to 10MB"
-  };
-
-  const finalUploadText = uploadText || defaultUploadText;
+  const canUpload = slotType === 'upload';
 
   return (
-    <div className="flex-1 flex flex-col h-full">
-      {/* Main Image Area */}
-      <div className="flex-1 relative">
-        {displayImage ? (
-          <div className="relative w-full h-full">
-            {showComparison && canShowComparison ? (
-              <ImageComparisonSlider
-                beforeImage={selectedImage!}
-                afterImage={generatedImage!}
-                className="w-full h-full"
-              />
-            ) : (
-              <Image
-                src={displayImage}
-                alt="Room design"
-                fill
-                className="object-cover rounded-lg"
-              />
-            )}
-            
-            {/* Loading Overlay */}
-            {isGenerating && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                <div className="text-center text-white">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                  <p className="text-lg font-medium">Generating your design...</p>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="absolute top-4 right-4 flex space-x-2">
-              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white" onClick={handleLike}>
-                <Heart className="h-4 w-4" />
-              </Button>
-              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white" onClick={handleDownload}>
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button size="icon" variant="secondary" className="bg-white/90 hover:bg-white" onClick={handleExpand}>
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Delete Button */}
-            <Button 
-              size="icon" 
-              variant="destructive" 
-              className="absolute top-4 left-4 bg-red-500/90 hover:bg-red-600 text-white"
-              onClick={handleRemoveImage}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          showUploadArea && (
-            <Card
-              className={cn(
-                "w-full h-full border-2 border-dashed transition-colors duration-200 flex items-center justify-center cursor-pointer",
-                dragActive ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-gray-400"
-              )}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById('file-upload')?.click()}
-            >
-              <div className="text-center p-8">
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {finalUploadText.title}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {finalUploadText.description}
-                </p>
-                <p className="text-sm text-gray-400">
-                  {finalUploadText.placeholder}
-                </p>
-              </div>
-              <input
-                id="file-upload"
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileInput}
-              />
-            </Card>
-          )
+    <>
+      <Card
+        className={cn(
+          'relative w-full h-full border-2 transition-colors duration-200 flex items-center justify-center group',
+          dragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-300',
+          imageUrl ? 'border-solid' : 'border-dashed',
+          canUpload && !imageUrl ? 'cursor-pointer hover:border-gray-400' : ''
         )}
-      </div>
-
-      {/* Image Modal */}
-      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
-        <DialogContent className="max-w-[98vw] max-h-[98vh] w-[1600px] h-[1000px] p-0 overflow-hidden border-0">
-          <DialogTitle className="sr-only">Full size image</DialogTitle>
-          <div className="relative w-full h-full bg-black">
-            <Button
-              size="icon"
-              variant="secondary"
-              className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white"
-              onClick={() => setShowImageModal(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            {displayImage && (
-              <Image
-                src={displayImage}
-                alt="Full size image"
-                fill
-                className="object-contain"
-                sizes="(max-width: 1600px) 98vw, 1600px"
-              />
+        onDragEnter={canUpload ? handleDrag : undefined}
+        onDragLeave={canUpload ? handleDrag : undefined}
+        onDragOver={canUpload ? handleDrag : undefined}
+        onDrop={canUpload ? handleDrop : undefined}
+        onClick={() => canUpload && !imageUrl && document.getElementById(`file-upload-${slotIndex}`)?.click()}
+      >
+        {imageUrl ? (
+          <Image src={imageUrl} alt="Room design" fill className="object-cover rounded-md" />
+        ) : (
+          <div className="text-center p-4">
+            {canUpload ? (
+              <>
+                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="font-medium text-gray-800">Upload Original Image</h3>
+                <p className="text-sm text-gray-500">Drag & drop or click to upload</p>
+              </>
+            ) : (
+              <ImageIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+
+        {isGenerating && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
+            <div className="text-center text-white">
+              <Loader2 className="h-10 w-10 animate-spin mx-auto mb-3" />
+              <p className="font-medium">Generating...</p>
+            </div>
+          </div>
+        )}
+
+        {imageUrl && (
+          <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
+            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setShowImageModal(true)}><Maximize2 className="h-4 w-4" /></Button>
+            {onRemove && (
+              <Button size="icon" variant="destructive" className="h-8 w-8" onClick={onRemove}><X className="h-4 w-4" /></Button>
+            )}
+          </div>
+        )}
+
+        {canUpload && <input id={`file-upload-${slotIndex}`} type="file" className="hidden" accept="image/*" onChange={handleFileInput} />}
+      </Card>
+
+      <ImageDialog
+        isOpen={showImageModal}
+        onOpenChange={setShowImageModal}
+        imageUrl={imageUrl}
+        originalImageUrl={originalImageUrl}
+        slotType={slotType}
+        slotIndex={slotIndex}
+      />
+    </>
+  );
+}
+
+export function MainImageDisplay({
+  selectedImage,
+  generatedImages,
+  isGenerating,
+  generatingSlot,
+  onImageUpload,
+  onImageRemove,
+  onRemoveGeneratedImage,
+}: MainImageDisplayProps) {
+
+  const slots = [0, 1, 2, 3];
+  const firstSlotImage = generatedImages.length > 0 ? generatedImages[0] : selectedImage;
+
+  return (
+    <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-4 h-full p-4 bg-gray-100 rounded-lg">
+      {/* Slot 0 (Top-Left) */}
+      <ImageSlot
+        imageUrl={firstSlotImage}
+        originalImageUrl={selectedImage}
+        isGenerating={isGenerating && generatingSlot === 0}
+        onUpload={onImageUpload}
+        onRemove={generatedImages.length > 0 ? () => onRemoveGeneratedImage(0) : onImageRemove}
+        slotType={generatedImages.length > 0 ? "generated" : "upload"}
+        slotIndex={0}
+      />
+
+      {/* Other slots */}
+      {slots.slice(1).map(index => (
+        <ImageSlot
+          key={index}
+          imageUrl={generatedImages[index] || null}
+          originalImageUrl={selectedImage}
+          isGenerating={isGenerating && generatingSlot === index}
+          onRemove={generatedImages[index] ? () => onRemoveGeneratedImage(index) : undefined}
+          slotIndex={index}
+        />
+      ))}
     </div>
   );
 }

@@ -12,10 +12,11 @@ export default function RedecorateRoomPage() {
   // State management
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedRoomType, setSelectedRoomType] = useState<string | null>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
 
   // Handlers
   const handleStyleSelect = (styleId: string) => {
@@ -29,6 +30,7 @@ export default function RedecorateRoomPage() {
       // Create object URL for immediate preview
       const previewUrl = URL.createObjectURL(file);
       setSelectedImage(previewUrl);
+      setGeneratedImages([]); // Clear previous generations
 
       // Upload to server
       const formData = new FormData();
@@ -63,15 +65,25 @@ export default function RedecorateRoomPage() {
 
   const handleImageRemove = () => {
     setSelectedImage(null);
-    setGeneratedImage(null);
+    setGeneratedImages([]);
     toast.success('Image removed. You can upload a new image.');
+  };
+
+  const handleRemoveGeneratedImage = (index: number) => {
+    setGeneratedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   // tRPC mutation for image generation
   const generateMutation = trpc.images.generateRedecorate.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.generatedImageUrl) {
-        setGeneratedImage(data.generatedImageUrl);
+        setGeneratedImages(prev => {
+          const newImages = [...prev];
+          if (generatingSlot !== null) {
+            newImages[generatingSlot] = data.generatedImageUrl!;
+          }
+          return newImages;
+        });
         toast.success('🎨 Your design has been generated successfully!');
         console.log('✅ Generation completed successfully');
       } else if (data.error) {
@@ -85,6 +97,7 @@ export default function RedecorateRoomPage() {
     },
     onSettled: () => {
       setIsGenerating(false);
+      setGeneratingSlot(null);
     }
   });
 
@@ -105,8 +118,15 @@ export default function RedecorateRoomPage() {
       return;
     }
 
+    const nextSlot = generatedImages.length;
+    if (nextSlot >= 4) {
+      toast.error("All image slots are full. Please remove one to generate a new design.");
+      return;
+    }
+
     setIsGenerating(true);
-    toast.loading('🎨 Generating your design... This may take 30-60 seconds');
+    setGeneratingSlot(nextSlot);
+    toast.loading(`🎨 Generating design in slot ${nextSlot + 1}... This may take 30-60 seconds`);
     
     console.log('🎨 Starting generation with:', {
       roomType: selectedRoomType,
@@ -135,10 +155,12 @@ export default function RedecorateRoomPage() {
         <div className="flex-1 p-6">
           <MainImageDisplay
             selectedImage={selectedImage}
-            generatedImage={generatedImage}
+            generatedImages={generatedImages}
             isGenerating={isGenerating}
+            generatingSlot={generatingSlot}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
+            onRemoveGeneratedImage={handleRemoveGeneratedImage}
           />
         </div>
         

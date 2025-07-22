@@ -390,11 +390,17 @@ export class GeminiService {
     const styleDesc =
       stylePrompts[designStyle as keyof typeof stylePrompts] || "a modern style";
 
-    return `Act as an elite interior photographer and a world-class interior designer. Your task is to capture and redesign the provided image of ${roomDesc}, transforming it into ${styleDesc}.
+    return `Your task is to act as a photorealistic rendering engine. You will receive an image of a room and your job is to re-texture it according to a new design style.
 
-Preserve the original architectural layout, furniture placement, and core structure with absolute precision. Your modifications must focus exclusively on the surface-level elements: textures, colors, lighting, and decorative objects.
+**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL IMAGE'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input image.**
 
-The final output must be an ultra-realistic, 8K resolution photograph. It should look like it was taken with a professional DSLR camera with a high-quality lens, showcasing exceptional detail, perfect lighting, and hyper-realistic material textures. Pay close attention to how light interacts with surfaces, creating subtle reflections and soft shadows. The image must be indistinguishable from a real-world photograph published in a top-tier interior design magazine. Do not add, remove, or reposition any furniture or structural features.`;
+With the camera position locked, you will then modify the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:
+- Textures and materials (e.g., wood, metal, fabric)
+- Colors and color palette
+- Lighting (e.g., ambient, task, natural)
+- Decorative objects (e.g., pillows, vases, art)
+
+Do not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
   }
 
   private static generateSketchToRealityPrompt(
