@@ -1,18 +1,15 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+import * as authSchema from '../../../auth-schema';
 
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 255 }),
-  emailVerified: boolean('email_verified').default(false),
-  image: text('image'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
+export const users = authSchema.user;
+export const sessions = authSchema.session;
+export const accounts = authSchema.account;
+export const verifications = authSchema.verification;
 
+// Application tables
 export const images = pgTable('images', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: text('user_id').references(() => users.id).notNull(),
   originalImageUrl: text('original_image_url').notNull(),
   generatedImageUrl: text('generated_image_url'),
   roomType: varchar('room_type', { length: 50 }),
@@ -24,7 +21,7 @@ export const images = pgTable('images', {
 
 export const videos = pgTable('videos', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: text('user_id').references(() => users.id).notNull(),
   imageId: uuid('image_id').references(() => images.id),
   originalImageUrl: text('original_image_url').notNull(),
   generatedVideoUrl: text('generated_video_url'),
@@ -46,7 +43,7 @@ export const imageStorage = pgTable('image_storage', {
 
 export const favorites = pgTable('favorites', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: text('user_id').references(() => users.id).notNull(),
   imageId: uuid('image_id').references(() => images.id).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
 });

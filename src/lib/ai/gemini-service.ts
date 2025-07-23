@@ -1,4 +1,4 @@
-import { GoogleGenAI, Part } from "@google/genai";
+import { GoogleGenerativeAI as GoogleGenAI, Part } from "@google/generative-ai";
 import { put } from "@vercel/blob";
 import mime from "mime";
 import { furnishEmptySpaceSystemPrompt } from "./prompts/furnish-prompt";
@@ -25,9 +25,7 @@ const getGoogleAI = () => {
     );
   }
 
-  return new GoogleGenAI({
-    apiKey: apiKey,
-  });
+  return new GoogleGenAI(apiKey);
 };
 
 async function urlToGenerativePart(url: string, mimeType: string): Promise<Part> {
@@ -89,11 +87,6 @@ export class GeminiService {
         getMimeTypeFromUrl(input.imageUrl)
       );
 
-      const config = {
-        responseModalities: ["IMAGE", "TEXT"],
-        responseMimeType: "text/plain",
-      };
-
       const generationConfig = {
         quality: "hd", // Use 'hd' for higher quality
         responseMimeType: "image/png", // Request a high-quality PNG
@@ -103,7 +96,11 @@ export class GeminiService {
         ],
       };
 
-      const model = this.IMAGE_GENERATION_MODEL;
+      const model = ai.getGenerativeModel({
+        model: this.IMAGE_GENERATION_MODEL,
+        generationConfig,
+      });
+
       const contents = [
         {
           role: "user",
@@ -118,14 +115,11 @@ export class GeminiService {
         },
       ];
 
-      const response = await ai.models.generateContentStream({
-        model,
-        config,
-        generationConfig, // Add the detailed generation config
+      const response = await model.generateContentStream({
         contents,
       });
 
-      for await (const chunk of response) {
+      for await (const chunk of response.stream) {
         if (
           !chunk.candidates ||
           !chunk.candidates[0].content ||
@@ -184,11 +178,6 @@ export class GeminiService {
         getMimeTypeFromUrl(input.imageUrl)
       );
 
-      const config = {
-        responseModalities: ["IMAGE", "TEXT"],
-        responseMimeType: "text/plain",
-      };
-
       const generationConfig = {
         quality: "hd", // Use 'hd' for higher quality
         responseMimeType: "image/png", // Request a high-quality PNG
@@ -198,7 +187,11 @@ export class GeminiService {
         ],
       };
 
-      const model = this.IMAGE_GENERATION_MODEL;
+      const model = ai.getGenerativeModel({
+        model: this.IMAGE_GENERATION_MODEL,
+        generationConfig,
+      });
+
       const contents = [
         {
           role: "user",
@@ -208,22 +201,19 @@ export class GeminiService {
               text:
                 input.prompt ||
                 this.generateSketchToRealityPrompt(
-                  input.roomType,
-                  input.designStyle
+                  input.roomType || '',
+                  input.designStyle || ''
                 ),
             },
           ],
         },
       ];
 
-      const response = await ai.models.generateContentStream({
-        model,
-        config,
-        generationConfig, // Add the detailed generation config
+      const response = await model.generateContentStream({
         contents,
       });
 
-      for await (const chunk of response) {
+      for await (const chunk of response.stream) {
         if (
           !chunk.candidates ||
           !chunk.candidates[0].content ||
@@ -278,11 +268,10 @@ export class GeminiService {
 
       const ai = getGoogleAI();
 
-      const config = {
-        responseModalities: ["IMAGE", "TEXT"],
-        responseMimeType: "text/plain",
-      };
-      const model = this.IMAGE_GENERATION_MODEL;
+      const model = ai.getGenerativeModel({
+        model: this.IMAGE_GENERATION_MODEL,
+      });
+
       const contents = [
         {
           role: "user",
@@ -294,13 +283,11 @@ export class GeminiService {
         },
       ];
 
-      const response = await ai.models.generateContentStream({
-        model,
-        config,
+      const response = await model.generateContentStream({
         contents,
       });
 
-      for await (const chunk of response) {
+      for await (const chunk of response.stream) {
         if (
           !chunk.candidates ||
           !chunk.candidates[0].content ||
@@ -360,11 +347,6 @@ export class GeminiService {
         getMimeTypeFromUrl(input.imageUrl)
       );
 
-      const config = {
-        responseModalities: ["IMAGE", "TEXT"],
-        responseMimeType: "text/plain",
-      };
-
       const generationConfig = {
         quality: "hd",
         responseMimeType: "image/png",
@@ -374,7 +356,11 @@ export class GeminiService {
         ],
       };
 
-      const model = this.IMAGE_GENERATION_MODEL;
+      const model = ai.getGenerativeModel({
+        model: this.IMAGE_GENERATION_MODEL,
+        generationConfig,
+      });
+
       const fullPrompt = `${furnishEmptySpaceSystemPrompt}\n\nUser Prompt: "${input.prompt}"`;
       
       const contents = [
@@ -389,14 +375,11 @@ export class GeminiService {
         },
       ];
 
-      const response = await ai.models.generateContentStream({
-        model,
-        config,
-        generationConfig,
+      const response = await model.generateContentStream({
         contents,
       });
 
-      for await (const chunk of response) {
+      for await (const chunk of response.stream) {
         if (
           !chunk.candidates ||
           !chunk.candidates[0].content ||
@@ -464,11 +447,6 @@ export class GeminiService {
         parts.push(maskPart);
       }
 
-      const config = {
-        responseModalities: ["IMAGE", "TEXT"],
-        responseMimeType: "text/plain",
-      };
-
       const generationConfig = {
         quality: "hd", // Use 'hd' for higher quality
         responseMimeType: "image/png", // Request a high-quality PNG
@@ -478,37 +456,21 @@ export class GeminiService {
         ],
       };
 
-      const model = this.IMAGE_GENERATION_MODEL;
+      const model = ai.getGenerativeModel({
+        model: this.IMAGE_GENERATION_MODEL,
+        generationConfig,
+      });
 
       // Create a prompt that instructs Gemini to remove the object marked by the red mask
-      const removeObjectPrompt = `
-        You are a professional photo editor specializing in object removal. 
-        ${
+      const removeObjectPrompt = `\n        You are a professional photo editor specializing in object removal. \n        ${
           input.mask
-            ? `I'm providing two images:
-        1. The original image
-        2. The same image with a red mask highlighting the object to be removed
-        
-        Please remove ONLY the object highlighted by the red mask and replace it with appropriate background content that matches the surrounding area.`
+            ? `I'm providing two images:\n        1. The original image\n        2. The same image with a red mask highlighting the object to be removed\n        \n        Please remove ONLY the object highlighted by the red mask and replace it with appropriate background content that matches the surrounding area.`
             : "I'm providing an image and a prompt."
-        }
-        
-        The user has provided the following instruction: "${input.prompt}"
-
-        Important requirements:
-        - ${
+        }\n        \n        The user has provided the following instruction: "${input.prompt}"\n\n        Important requirements:\n        - ${
           input.mask
             ? "Remove ONLY the red-masked area"
             : "Follow the user's prompt to remove the object."
-        }
-        - Use inpainting to fill the removed area naturally
-        - Maintain the exact same perspective, lighting, and style as the original image
-        - Ensure the result looks completely natural with no artifacts
-        - Do not alter any other part of the image
-        - Preserve the original image dimensions and quality
-        
-        Generate a photorealistic result that makes it appear as if the object was never there.
-      `;
+        }\n        - Use inpainting to fill the removed area naturally\n        - Maintain the exact same perspective, lighting, and style as the original image\n        - Ensure the result looks completely natural with no artifacts\n        - Do not alter any other part of the image\n        - Preserve the original image dimensions and quality\n        \n        Generate a photorealistic result that makes it appear as if the object was never there.\n      `;
 
       parts.push({ text: removeObjectPrompt });
 
@@ -519,14 +481,11 @@ export class GeminiService {
         },
       ];
 
-      const response = await ai.models.generateContentStream({
-        model,
-        config,
-        generationConfig,
+      const response = await model.generateContentStream({
         contents,
       });
 
-      for await (const chunk of response) {
+      for await (const chunk of response.stream) {
         if (
           !chunk.candidates ||
           !chunk.candidates[0].content ||
@@ -615,17 +574,7 @@ export class GeminiService {
     const styleDesc =
       stylePrompts[designStyle as keyof typeof stylePrompts] || "a modern style";
 
-    return `Your task is to act as a photorealistic rendering engine. You will receive an image of a room and your job is to re-texture it according to a new design style.
-
-**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL IMAGE'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input image.**
-
-With the camera position locked, you will then modify the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:
-- Textures and materials (e.g., wood, metal, fabric)
-- Colors and color palette
-- Lighting (e.g., ambient, task, natural)
-- Decorative objects (e.g., pillows, vases, art)
-
-Do not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
+    return `Your task is to act as a photorealistic rendering engine. You will receive an image of a room and your job is to re-texture it according to a new design style.\n\n**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL IMAGE'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input image.**\n\nWith the camera position locked, you will then modify the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:\n- Textures and materials (e.g., wood, metal, fabric)\n- Colors and color palette\n- Lighting (e.g., ambient, task, natural)\n- Decorative objects (e.g., pillows, vases, art)\n\nDo not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
   }
 
   private static generateSketchToRealityPrompt(
@@ -675,17 +624,7 @@ Do not add, remove, or change the position of any furniture or architectural ele
     const styleDesc =
       stylePrompts[designStyle as keyof typeof stylePrompts] || "a modern style";
 
-    return `Your task is to act as a photorealistic rendering engine. You will receive a line-art sketch of a room and your job is to transform it into a photorealistic, 8K image. Your output must be a high-quality, professional photograph of a real-world interior.
-
-**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL SKETCH'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input sketch.**
-
-With the camera position locked, you will then render the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:
-- Textures and materials (e.g., wood, metal, fabric)
-- Colors and color palette
-- Lighting (e.g., ambient, task, natural)
-- Decorative objects (e.g., pillows, vases, art)
-
-Do not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
+    return `Your task is to act as a photorealistic rendering engine. You will receive a line-art sketch of a room and your job is to transform it into a photorealistic, 8K image. Your output must be a high-quality, professional photograph of a real-world interior.\n\n**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL SKETCH'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input sketch.**\n\nWith the camera position locked, you will then render the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:\n- Textures and materials (e.g., wood, metal, fabric)\n- Colors and color palette\n- Lighting (e.g., ambient, task, natural)\n- Decorative objects (e.g., pillows, vases, art)\n\nDo not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
   }
 
   static async uploadImageToBlob(

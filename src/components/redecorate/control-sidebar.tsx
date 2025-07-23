@@ -5,20 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-const quickTools = [
-  { id: "home-staging", name: "Home Staging", image: "/modern.webp" },
-  { id: "moodboard-ai", name: "Moodboard AI", image: "/professional.webp" },
-  { id: "redecoration", name: "Redecoration", image: "/vintage.webp" },
-  { id: "text-to-design", name: "Text To Design", image: "/summer.webp" },
-  { id: "sketch-ai", name: "Sketch AI", image: "/coastal.webp" },
-  { id: "wall-ai", name: "Wall AI", image: "/tropical.webp" },
-  { id: "floor-ai", name: "Floor AI", image: "/industrial.webp" },
-  { id: "product-staging", name: "Product Staging", image: "/neoclassic.webp" },
-];
+
 
 // Room Type Icons as SVG components
 const LivingRoomIcon = () => (
@@ -163,6 +154,7 @@ interface ControlSidebarProps {
   isGenerating: boolean;
   showRoomType?: boolean;
   showDesignStyle?: boolean;
+  
   prompt?: string;
   onPromptChange?: (prompt: string) => void;
   promptPlaceholder?: string;
@@ -182,7 +174,7 @@ export function ControlSidebar({
   onGenerate,
   isGenerating,
   showRoomType = true,
-  showDesignStyle = true,
+  
   prompt,
   onPromptChange,
   promptPlaceholder = "Describe your design...",

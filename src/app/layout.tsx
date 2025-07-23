@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
+import { AuthClientProvider } from "@/providers/auth-client-provider";
 import { TRPCProvider } from "@/providers/trpc-provider";
 import { Toaster } from "sonner";
 
@@ -25,10 +26,12 @@ export default function RootLayout({
       <body
         className={`${bricolageGrotesque.variable} antialiased`}
       >
-        <TRPCProvider>
-          {children}
-          <Toaster />
-        </TRPCProvider>
+        <AuthClientProvider>
+          <TRPCProvider>
+            {children}
+            <Toaster />
+          </TRPCProvider>
+        </AuthClientProvider>
       </body>
     </html>
   );

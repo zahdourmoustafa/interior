@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone, FileRejection } from 'react-dropzone';
-import { Upload, X, Loader2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Upload, Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -82,7 +82,7 @@ export function ImageUpload({
         reader.readAsDataURL(file);
       }
     },
-    [maxSize, onImageSelect, uploadMutation, onUploadBegin, onUploadComplete]
+    [maxSize, uploadMutation, onUploadBegin]
   );
 
   const { getRootProps, getInputProps } = useDropzone({

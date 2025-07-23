@@ -12,7 +12,7 @@ interface FeatureCardProps {
   description: string;
   href: string;
   backgroundImage: string;
-  features?: string[];
+  
   badgeText?: string;
   badgeVariant?: "new" | "pro";
   minutes?: number;
@@ -24,7 +24,7 @@ export function FeatureCard({
   description,
   href,
   backgroundImage,
-  features = [],
+  
   badgeText,
   badgeVariant,
   minutes = 1,

@@ -59,9 +59,7 @@ export default function RedecorateRoomPage() {
     }
   };
 
-  const handleRoomTypeSelect = (roomType: string) => {
-    setSelectedRoomType(roomType);
-  };
+  
 
   const handleImageRemove = () => {
     setSelectedImage(null);

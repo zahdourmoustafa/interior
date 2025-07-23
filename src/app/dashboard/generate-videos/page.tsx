@@ -118,7 +118,8 @@ export default function GenerateVideosPage() {
               toast.error('Video generation failed');
               clearInterval(interval);
             }
-        } catch(e) {
+        } catch(error) {
+            console.error('Polling error:', error);
             setIsGenerating(false);
             toast.error('Video generation failed');
             clearInterval(interval);

@@ -11,21 +11,54 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, Settings, LogOut } from 'lucide-react';
+import { authClient } from '@/lib/auth-client';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export function UserProfile() {
-  // TODO: Replace with actual user data from auth
-  const user = {
-    name: 'John Doe',
-    email: 'john@example.com',
-    avatar: 'https://github.com/shadcn.png',
+  const session = authClient.useSession();
+  const router = useRouter();
+  
+  const handleSignOut = async () => {
+    try {
+      await authClient.signOut();
+      router.push('/sign-in');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
+  
+  const user = session.data?.user;
+  
+  console.log('Session data:', session);
+  console.log('User:', user);
+  console.log('Is loading:', session.isPending);
+
+  if (session.isPending) {
+    return (
+      <div className="flex items-center space-x-4">
+        <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+        <div className="space-y-2">
+          <div className="h-4 w-24 rounded bg-gray-200 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Button asChild>
+        <Link href="/sign-in">Sign In</Link>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarImage src={user.image ?? undefined} alt={user.name ?? ''} />
             <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
           </Avatar>
         </Button>
@@ -49,7 +82,7 @@ export function UserProfile() {
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

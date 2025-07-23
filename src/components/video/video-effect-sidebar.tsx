@@ -1,9 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 
 const videoEffects = [

@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { trpc } from "@/lib/trpc";
 import { ImageUpload } from "@/components/redecorate/image-upload";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, Loader2 } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 
 import { BrushControls } from "@/components/redecorate/brush-controls";
 
@@ -77,13 +77,7 @@ export default function RemoveObjectPage() {
     }
   };
 
-  const handleClearAll = () => {
-    setOriginalImage(null);
-    setCurrentImage(null);
-    setMask(null);
-    setHasDrawn(false);
-    toast.success("Image cleared. You can upload a new image.");
-  };
+  
 
   const handleResetToOriginal = () => {
     if (originalImage) {

@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     // If no userId is provided, create a new temporary user
     if (!userId) {
       const newUser = await db.insert(users).values({
+        id: uuidv4(),
         email: `user_${uuidv4()}@example.com`,
         name: 'Anonymous User',
       }).returning();

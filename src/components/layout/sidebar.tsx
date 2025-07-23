@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Home, CreditCard, FileCode, Settings, ChevronRight, Image, Video, Scissors, Brush, Wallpaper } from 'lucide-react';
+import { Home, ChevronRight, Image, Video, Scissors, Brush, Wallpaper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { UserProfile } from './user-profile';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -94,45 +93,19 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
       
       {/* Footer */}
-      <div className="p-4 mt-auto">
-        {/* Sign In Button - Only visible when expanded */}
+      <div className="p-4 mt-auto border-t border-gray-200">
+        {/* User Profile - Only visible when expanded */}
         <div className={cn(
-          "flex items-center space-x-2 mb-4 transition-opacity duration-300",
+          "transition-opacity duration-300",
           isExpanded || isHovering ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
         )}>
-          <Avatar className="h-6 w-6">
-            <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
-              U
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm text-gray-600">Sign in</span>
-          <div className="ml-auto flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full">
-            <span className="text-xs text-blue-600 font-medium">1</span>
-          </div>
-        </div>
-        
-        {/* Unlimited Access - Only visible when expanded */}
-        <div className={cn(
-          "bg-gray-50 rounded-lg p-3 transition-opacity duration-300",
-          isExpanded || isHovering ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-        )}>
-          <p className="text-sm font-medium text-gray-800">Unlimited Access</p>
-          <p className="text-xs text-gray-600 mt-1">
-            Upgrade for better generations and more beautiful
-          </p>
-          <Button className="mt-3 w-full bg-white text-gray-800 border border-gray-200 hover:bg-gray-50 text-xs h-8 rounded-lg">
-            Get Pro
-          </Button>
+          <UserProfile />
         </div>
         
         {/* Collapsed Avatar - Only visible when collapsed */}
         {!isExpanded && !isHovering && (
           <div className="flex justify-center">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
-                U
-              </AvatarFallback>
-            </Avatar>
+            <UserProfile />
           </div>
         )}
       </div>

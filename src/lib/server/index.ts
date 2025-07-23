@@ -7,7 +7,6 @@ import { validateImageFile } from "./upload";
 import { GeminiService } from "../ai/gemini-service";
 import { ImagenService } from "../ai/imagen-service";
 import { PromptGenerator } from "../ai/prompt-generator";
-import type { User } from "../db/schema";
 
 const t = initTRPC.create();
 

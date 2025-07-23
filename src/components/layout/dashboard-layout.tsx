@@ -1,8 +1,10 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Sidebar } from './sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,6 +13,14 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, useContainer = true }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const session = authClient.useSession();
+
+  useEffect(() => {
+    if (!session.isPending && !session.data?.user) {
+      router.push('/sign-in');
+    }
+  }, [session, router]);
 
   return (
     <div className="flex h-screen bg-[#F8F8FA]">

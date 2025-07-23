@@ -1,6 +1,9 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { FeatureCard } from '@/components/dashboard/feature-card';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 
 const features = [
   {
@@ -39,7 +42,7 @@ const features = [
   {
     title: 'Remove Object',
     description: 'Use the brush to select objects you want to remove from the image.',
-    href: '/dashboard/remove-object',
+    href: 'dashboard/remove-object',
     backgroundImage: '/coastal.webp',
     minutes: 1,
     generation: 1,
@@ -58,7 +61,15 @@ const features = [
   },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
+  
+  if (!session) {
+    redirect('/sign-in');
+  }
+
   return (
     <DashboardLayout>
       <ErrorBoundary>
