@@ -38,7 +38,7 @@ export function VideoEffectSidebar({ selectedEffect, onEffectSelect }: VideoEffe
           className={cn(
             "relative h-24 cursor-pointer transition-all duration-200 border-2 overflow-hidden rounded-lg flex items-center justify-center",
             selectedEffect === effect.id 
-              ? "border-orange-500 ring-2 ring-orange-500/50" 
+              ? "border-[#3b82f6] ring-2 ring-[#3b82f6]/50" 
               : "border-transparent hover:border-gray-600",
             effect.color
           )}

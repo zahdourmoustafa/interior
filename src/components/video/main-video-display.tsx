@@ -74,7 +74,7 @@ export function MainVideoDisplay({
       <Card
         className={cn(
           'relative w-full h-full border-2 transition-colors duration-200 flex items-center justify-center group',
-          dragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-300',
+                        dragActive ? 'border-[#3b82f6] bg-[#3b82f6]/10' : 'border-gray-300',
           selectedImage ? 'border-solid' : 'border-dashed',
           !selectedImage ? 'cursor-pointer hover:border-gray-400' : ''
         )}

@@ -59,13 +59,13 @@ export function Sidebar({ className }: SidebarProps) {
                 className={cn(
                   "flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
                   pathname === item.href
-                    ? "bg-blue-50 text-blue-600"
+                    ? "bg-[#3b82f6]/10 text-[#3b82f6]"
                     : "text-gray-600 hover:bg-gray-50"
                 )}
               >
                 <item.icon className={cn(
                   "h-5 w-5 flex-shrink-0",
-                  pathname === item.href ? "text-blue-600" : "text-gray-500"
+                  pathname === item.href ? "text-[#3b82f6]" : "text-gray-500"
                 )} />
                 <span className={cn(
                   "ml-3 transition-opacity duration-300",
@@ -86,7 +86,7 @@ export function Sidebar({ className }: SidebarProps) {
       )}>
         <div className="flex items-center">
           <span className="text-sm text-gray-600 mr-3">Theme</span>
-          <div className="w-12 h-6 bg-blue-600 rounded-full relative">
+          <div className="w-12 h-6 bg-[#3b82f6] rounded-full relative">
             <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
           </div>
         </div>

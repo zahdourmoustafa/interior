@@ -56,7 +56,7 @@ export function FeatureCard({
             <Badge 
               className={`text-xs font-medium px-2 py-1 uppercase ${
                 badgeVariant === "new" 
-                  ? "bg-[#3498DB] text-white" 
+                  ? "bg-[#3b82f6] text-white" 
                   : "bg-[#E74C3C] text-white"
               }`}
             >
@@ -83,7 +83,7 @@ export function FeatureCard({
       {/* Launch Button */}
       <div className="p-4 pt-0">
         <Link href={href}>
-          <Button className="w-full bg-[#6B5FD3] hover:bg-[#5a4fc9] text-white px-4 py-2 rounded-lg text-sm font-medium h-8">
+          <Button className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white px-4 py-2 rounded-lg text-sm font-medium h-8">
             Launch Tool
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

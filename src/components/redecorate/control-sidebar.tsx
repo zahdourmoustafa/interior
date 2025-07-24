@@ -281,7 +281,7 @@ export function ControlSidebar({
                     className={cn(
                       "p-3 rounded-lg border-2 text-center transition-all duration-200",
                       selectedRoomType === room.id
-                        ? "border-orange-500 bg-orange-50"
+                        ? "border-[#3b82f6] bg-[#3b82f6]/10"
                         : "border-gray-200 hover:border-gray-300"
                     )}
                   >
@@ -315,7 +315,7 @@ export function ControlSidebar({
           disabled={isGenerating || 
                    (generateButtonDisabled !== undefined ? generateButtonDisabled : 
                     ((showRoomType && !selectedRoomType) || (prompt !== undefined && !prompt?.trim())))}
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 text-lg font-medium"
+          className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white py-3 text-lg font-medium"
         >
           {isGenerating ? "Generating..." : generateButtonText || "Generate"}
         </Button>

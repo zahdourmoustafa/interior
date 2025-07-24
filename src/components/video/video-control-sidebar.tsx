@@ -55,7 +55,7 @@ export function VideoControlSidebar({
               className={cn(
                 "relative h-20 cursor-pointer transition-all duration-200 border-2 overflow-hidden rounded-lg flex items-center justify-center",
                 selectedEffect === effect.id 
-                  ? "border-orange-500 ring-2 ring-orange-500/50" 
+                  ? "border-[#3b82f6] ring-2 ring-[#3b82f6]/50" 
                   : "border-transparent hover:border-gray-600",
                 effect.color
               )}
@@ -78,7 +78,7 @@ export function VideoControlSidebar({
         <Button
           onClick={onGenerate}
           disabled={isGenerating}
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 text-lg font-medium"
+          className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white py-3 text-lg font-medium"
         >
           {isGenerating ? "Generating..." : "Generate"}
         </Button>

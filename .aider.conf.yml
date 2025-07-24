@@ -1,0 +1,3 @@
+openai-api-base: https://sourcegraph.com/.api/llm
+openai-api-key: sgp_e3cb05880bc40429_73b834c59bd89ead480819e83a233cbd984f5ada 
+model: openai/anthropic::2024-10-22::claude-sonnet-4-latest
