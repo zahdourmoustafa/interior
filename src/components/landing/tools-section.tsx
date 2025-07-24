@@ -51,18 +51,18 @@ const toolsData = [
 const videoProductionData = [
   {
     id: 1,
-    image: "/coastal.webp",
-    videoSrc: "/thumb.mp4"
+    image: "/bedroom.webp",
+    videoSrc: "/bedroom_video.mp4"
   },
   {
     id: 2,
-    image: "/modern.webp",
-    videoSrc: "/thumb.mp4"
+    image: "/outside.webp",
+    videoSrc: "/outside_video.mp4"
   },
   {
     id: 3,
-    image: "/vintage.webp",
-    videoSrc: "/thumb.mp4"
+    image: "/waterpool.webp",
+    videoSrc: "/waterpool_video.mp4"
   }
 ];
 
