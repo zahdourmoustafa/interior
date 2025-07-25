@@ -101,8 +101,14 @@ export default function RedesignExteriorPage() {
 
   const handleGenerate = async () => {
     // Validation with user-friendly messages
-    if (!selectedImage || selectedImage.startsWith("blob:")) {
-      toast.error('Please wait for the image to finish uploading before generating.');
+    if (!selectedImage) {
+      toast.error('Please upload an image first');
+      return;
+    }
+    
+    // Check if image is still uploading (blob URL means upload not complete)
+    if (selectedImage.startsWith('blob:')) {
+      toast.error('Please wait for the image upload to complete before generating');
       return;
     }
     
@@ -119,9 +125,9 @@ export default function RedesignExteriorPage() {
 
     setIsGenerating(true);
     setGeneratingSlot(nextSlot);
-    toast.loading(`🎨 Generating design in slot ${nextSlot + 1}... This may take 30-60 seconds`);
+    toast.loading(`🏠 Generating exterior design in slot ${nextSlot + 1}... This may take 30-60 seconds`);
     
-    console.log('🎨 Starting generation with:', {
+    console.log('🏠 Starting exterior generation with:', {
       designStyle: selectedStyle,
       imageUrl: selectedImage.substring(0, 50) + '...'
     });

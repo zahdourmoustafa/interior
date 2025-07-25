@@ -12,7 +12,7 @@ const bricolageGrotesque = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "InteriorAI Pro",
+  title: "ArchiCassoAI Pro",
   description: "AI-powered interior design platform",
 };
 

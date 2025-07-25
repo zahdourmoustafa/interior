@@ -47,7 +47,7 @@ export default function CTASection() {
             Bring Your Home To Life
             <br />
             <span className="text-black">With </span>
-            <span className="text-blue-400">InteriorAI.</span>
+            <span className="text-blue-400">ArchiCassoAI.</span>
           </motion.h2>
 
           {/* Descriptive Text */}
@@ -58,7 +58,7 @@ export default function CTASection() {
             viewport={{ once: true }}
             className="text-lg text-black/90 max-w-2xl mx-auto mb-8"
           >
-            Use InteriorAI to redesign any home in seconds: AI decoration, AI Interior Design, Exterior AI, Landscaping AI, House AI.
+            Use ArchiCassoAI to redesign any home in seconds: AI decoration, AI Interior Design, Exterior AI, Landscaping AI, House AI.
           </motion.p>
           
           {/* Call to Action Button */}
@@ -69,7 +69,7 @@ export default function CTASection() {
             viewport={{ once: true }}
           >
             <Link
-              href="/dashboard"
+              href="/sign-in"
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg font-medium rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"

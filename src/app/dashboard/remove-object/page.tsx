@@ -117,7 +117,7 @@ export default function RemoveObjectPage() {
 
     setIsGenerating(true);
     const loadingToast = toast.loading(
-      "Removing object with Gemini Flash 2.0... This may take 30-60 seconds"
+      "Removing object... This may take 30-60 seconds"
     );
     setLoadingToastId(loadingToast as string);
 

@@ -6,16 +6,16 @@ import { RiInstagramFill } from "react-icons/ri";
 export const BLUR_FADE_DELAY = 0.15;
 
 export const siteConfig = {
-  name: "Interior AI",
+  name: "ArchiCassoAI",
   description: "Transform your space with AI-powered interior design",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   keywords: ["Interior Design", "AI", "Next.js", "React", "Tailwind CSS"],
   links: {
-    email: "support@interiorai.com",
-    twitter: "https://twitter.com/interiorai",
-    discord: "https://discord.gg/interiorai",
-    github: "https://github.com/interiorai",
-    instagram: "https://instagram.com/interiorai/",
+    email: "support@archicassoai.com",
+    twitter: "https://twitter.com/archicassoai",
+    discord: "https://discord.gg/archicassoai",
+    github: "https://github.com/archicassoai",
+    instagram: "https://instagram.com/archicassoai/",
   },
   header: [
     {
@@ -98,6 +98,7 @@ export const siteConfig = {
       yearlyPrice: "$15.8",
       description: "Explore AI tools to elevate your design workflow.",
       credits: "1,000 Credits",
+      creemProductId: "prod_5TBCtzyYf2Tscj5szrdY1y",
       features: [
         "100 Designs",
         "12 Videos",
@@ -117,6 +118,7 @@ export const siteConfig = {
       yearlyPrice: "$32.5",
       description: "Generate amazing designs and visuals at fraction of cost.",
       credits: "5,000 Credits",
+      creemProductId: "prod_4iQOMKeKCamCrX4tAK15N9",
       features: [
         "500 Designs",
         "65 Videos",
@@ -137,6 +139,7 @@ export const siteConfig = {
       yearlyPrice: "$65.8",
       description: "Optimize your design workflow and serve your clients fast.",
       credits: "10,000 Credits",
+      creemProductId: "prod_32FFPjxTeZSLIdHHNscTkz",
       features: [
         "1000 Designs",
         "130 Videos",
@@ -237,17 +240,17 @@ export const siteConfig = {
   socials: [
     {
       name: "Twitter",
-      href: "https://twitter.com/interiorai",
+      href: "https://twitter.com/archicassoai",
       icon: FaTwitter,
     },
     {
       name: "YouTube",
-      href: "https://youtube.com/@interiorai",
+      href: "https://youtube.com/@archicassoai",
       icon: FaYoutube,
     },
     {
       name: "Instagram",
-      href: "https://instagram.com/interiorai",
+      href: "https://instagram.com/archicassoai",
       icon: RiInstagramFill,
     },
   ],
@@ -267,4 +270,7 @@ export interface PricingPlan {
   credits: string;
   features: string[];
   isPopular?: boolean;
+  creemProductId?: string;
+  creemMonthlyPriceId?: string;
+  creemYearlyPriceId?: string;
 } 

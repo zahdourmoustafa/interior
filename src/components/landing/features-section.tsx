@@ -9,14 +9,14 @@ const data = [
     id: 1,
     title: "AI-Powered Design Engine",
     content: "Transform your space with intelligent design recommendations.",
-    image: "/modern.webp",
+    image: "/after2.png",
     icon: <Wand2 className="h-6 w-6 text-primary" />,
   },
   {
     id: 2,
     title: "Style Matching Technology",
     content: "Find your perfect aesthetic with our advanced style analysis.",
-    image: "/coastal.webp",
+    image: "/after4.webp",
     icon: <Palette className="h-6 w-6 text-primary" />,
   },
   {

@@ -7,6 +7,7 @@ import { validateImageFile } from "./upload";
 import { GeminiService } from "../ai/gemini-service";
 import { ImagenService } from "../ai/imagen-service";
 import { PromptGenerator } from "../ai/prompt-generator";
+import { EnhancementService } from "../ai/enhancement-service";
 
 const t = initTRPC.create();
 
@@ -32,7 +33,7 @@ const authedProcedure = t.procedure.use(async (opts) => {
       .insert(users)
       .values({
         id: mockUserId,
-        email: "dev-user@interiorai.com",
+        email: "dev-user@archicassoai.com",
         name: "Development User",
         emailVerified: true,
         image: null,
@@ -126,14 +127,22 @@ export const appRouter = router({
             prompt: dynamicPrompt,
           });
 
+          // Enhance the generated image if successful
+          let finalImageUrl = result.imageUrl;
+          if (result.status === "completed" && result.imageUrl) {
+            console.log("✨ Enhancing redecorate room image...");
+            finalImageUrl = await EnhancementService.enhance(result.imageUrl);
+            console.log("✅ Enhancement completed for redecorate room");
+          }
+
           // Store in database if successful
-          if (result.status === "completed" && result.imageUrl && ctx.user) {
+          if (result.status === "completed" && finalImageUrl && ctx.user) {
             const imageRecord = await db
               .insert(images)
               .values({
                 userId: ctx.user.id,
                 originalImageUrl: input.originalImageUrl,
-                generatedImageUrl: result.imageUrl,
+                generatedImageUrl: finalImageUrl,
                 roomType: input.roomType,
                 style: input.designStyle,
                 aiPromptUsed: dynamicPrompt,
@@ -146,7 +155,7 @@ export const appRouter = router({
 
           return {
             jobId: result.jobId,
-            generatedImageUrl: result.imageUrl,
+            generatedImageUrl: finalImageUrl,
             status: result.status,
             error: result.error,
             prompt: dynamicPrompt,
@@ -183,14 +192,22 @@ export const appRouter = router({
             prompt: dynamicPrompt,
           });
 
+          // Enhance the generated image if successful
+          let finalImageUrl = result.imageUrl;
+          if (result.status === "completed" && result.imageUrl) {
+            console.log("✨ Enhancing exterior redesign image...");
+            finalImageUrl = await EnhancementService.enhance(result.imageUrl);
+            console.log("✅ Enhancement completed for exterior redesign");
+          }
+
           // Store in database if successful
-          if (result.status === "completed" && result.imageUrl && ctx.user) {
+          if (result.status === "completed" && finalImageUrl && ctx.user) {
             const imageRecord = await db
               .insert(images)
               .values({
                 userId: ctx.user.id,
                 originalImageUrl: input.originalImageUrl,
-                generatedImageUrl: result.imageUrl,
+                generatedImageUrl: finalImageUrl,
                 roomType: "exterior", // Using "exterior" as roomType
                 style: input.designStyle,
                 aiPromptUsed: dynamicPrompt,
@@ -203,7 +220,7 @@ export const appRouter = router({
 
           return {
             jobId: result.jobId,
-            generatedImageUrl: result.imageUrl,
+            generatedImageUrl: finalImageUrl,
             status: result.status,
             error: result.error,
             prompt: dynamicPrompt,
@@ -252,14 +269,22 @@ export const appRouter = router({
             prompt: dynamicPrompt,
           });
 
+          // Enhance the generated image if successful
+          let finalImageUrl = result.imageUrl;
+          if (result.status === "completed" && result.imageUrl) {
+            console.log("✨ Enhancing sketch-to-reality image...");
+            finalImageUrl = await EnhancementService.enhance(result.imageUrl);
+            console.log("✅ Enhancement completed for sketch-to-reality");
+          }
+
           // Store in database if successful
-          if (result.status === "completed" && result.imageUrl && ctx.user) {
+          if (result.status === "completed" && finalImageUrl && ctx.user) {
             const imageRecord = await db
               .insert(images)
               .values({
                 userId: ctx.user.id,
                 originalImageUrl: input.originalImageUrl,
-                generatedImageUrl: result.imageUrl,
+                generatedImageUrl: finalImageUrl,
                 roomType: input.roomType,
                 style: input.designStyle,
                 aiPromptUsed: dynamicPrompt,
@@ -275,7 +300,7 @@ export const appRouter = router({
 
           return {
             jobId: result.jobId,
-            generatedImageUrl: result.imageUrl,
+            generatedImageUrl: finalImageUrl,
             status: result.status,
             error: result.error,
             prompt: dynamicPrompt,

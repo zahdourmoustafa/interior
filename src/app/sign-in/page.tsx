@@ -46,12 +46,12 @@ export default function SignInPage() {
         <div className="flex items-center">
           <Image
             src="/next.svg"
-            alt="Interior AI"
+            alt="ArchiCassoAI"
             width={40}
             height={40}
             className="object-contain"
           />
-          <span className="ml-2 text-2xl font-bold text-blue-600">interiorAI</span>
+          <span className="ml-2 text-2xl font-bold text-blue-600">ArchiCassoAI</span>
         </div>
         <Button 
           className="bg-blue-500 hover:bg-blue-600 text-white px-8"
@@ -67,7 +67,7 @@ export default function SignInPage() {
         {/* User count badge */}
         <div className="mb-8 bg-white rounded-full px-6 py-2 shadow-sm border border-gray-100">
           <p className="text-gray-700">
-            Over <span className="text-blue-500 font-medium">10,000 users</span> have used InteriorAI so far
+            Over <span className="text-blue-500 font-medium">10,000 users</span> have used ArchiCassoAI so far
           </p>
         </div>
 

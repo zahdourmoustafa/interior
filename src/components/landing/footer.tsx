@@ -11,8 +11,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Icons.logo className="h-8 w-8" />
-              <span className="font-bold text-xl">{siteConfig.name}</span>
+              <Icons.logo className="h-12 w-12" />
             </div>
             <p className="text-sm text-muted-foreground max-w-xs">
               Transform your space with AI-powered interior design. Create stunning designs in minutes.

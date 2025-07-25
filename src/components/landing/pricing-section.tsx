@@ -2,10 +2,10 @@
 
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { siteConfig, type PricingPlan } from "@/lib/config";
+import SubscribeButton from "./subscribe-button";
 
 export default function PricingSection() {
   const [isYearly, setIsYearly] = useState(true);
@@ -152,16 +152,16 @@ export default function PricingSection() {
                 transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Button 
+                <SubscribeButton 
+                  plan={plan}
+                  isYearly={isYearly}
                   className={cn(
                     "w-full py-3 text-sm font-medium rounded-xl transition-all duration-200",
                     plan.isPopular
                       ? "bg-[#3b82f6] hover:bg-[#2563eb] text-white"
                       : "bg-[#3b82f6] hover:bg-[#2563eb] text-white"
                   )}
-                >
-                  Subscribe Now
-                </Button>
+                />
               </motion.div>
             </motion.div>
           ))}

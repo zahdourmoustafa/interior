@@ -147,10 +147,7 @@ export default function GlassNavigation({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: animationDelay + 0.1 }}
             >
-                             <Icons.logo className="w-6 h-6 md:w-8 md:h-8 text-[#3b82f6]" />
-               <span className="text-gray-900 font-bold text-base md:text-lg whitespace-nowrap">
-                 Interior AI
-               </span>
+              <Icons.logo className="w-8 h-8 md:w-12 md:h-12 text-[#3b82f6]" />
             </motion.div>
           )}
 
@@ -205,7 +202,7 @@ export default function GlassNavigation({
   );
 }
 
-// Preset for Interior AI
+// Preset for ArchiCassoAI
 export const interiorAIPreset = {
   links: [
     { label: "AI Tools", targetId: "ai-tools" },

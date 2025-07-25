@@ -106,6 +106,12 @@ export default function RedecorateRoomPage() {
       return;
     }
     
+    // Check if image is still uploading (blob URL means upload not complete)
+    if (selectedImage.startsWith('blob:')) {
+      toast.error('Please wait for the image upload to complete before generating');
+      return;
+    }
+    
     if (!selectedRoomType) {
       toast.error('Please select a room type');
       return;

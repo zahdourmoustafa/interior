@@ -8,44 +8,48 @@ import Image from "next/image";
 
 const toolsData = [
   {
-    id: "sketch-to-image",
-    title: "Sketch to Image",
-    description: "Transform your hand-drawn or digital sketches into stunning, fully rendered shots. Unlock the power of generating design variations from a single sketch.",
-    beforeImage: "/modern.webp",
-    afterImage: "/coastal.webp",
+    id: "room-makeover",
+    title: "Redecorate Interior",
+    description: "Give any room a complete style transformation in seconds. From modern minimalist to cozy farmhouse - explore endless design possibilities and find your perfect aesthetic match.",
+    beforeImage: "/before3.jpeg",
+    afterImage: "/after3.png",
     isVideo: false,
-    ctaText: "Try Sketch to Image",
-    href: "/dashboard/sketch-to-reality"
-  },
-  {
-    id: "ai-video",
-    title: "AI Video",
-    description: "Turn your designs into a 10 seconds animation in 1080p resolution with 1-click.",
-    videoSrc: "/thumb.mp4",
-    isVideo: true,
-    ctaText: "Try Video AI",
-    href: "/dashboard/generate-videos"
+    ctaText: "Start Makeover",
+    href: "/sign-in"
   },
   {
     id: "exterior-ai",
-    title: "Exterior AI",
+    title: "Redecorate Exterior ",
     description: "Redesign and visualize your exterior designs in seconds. Transform your building facades and outdoor spaces with AI-powered design suggestions.",
-    beforeImage: "/industrial.webp",
-    afterImage: "/modern.webp",
+    beforeImage: "/before4.webp",
+    afterImage: "/after4.webp",
     isVideo: false,
     ctaText: "Try Exterior AI",
-    href: "/dashboard/redesign-exterior"
+    href: "/sign-in"
+  },
+  
+
+  {
+    id: "remove-object",
+    title: "Object Remover",
+    description: "Effortlessly eliminate unwanted furniture, clutter, or objects from any room. Clean up your space instantly and see the true potential of your interior design without distractions.",
+    beforeImage: "/before.jpg",
+    afterImage: "/after6.png",
+    isVideo: false,
+    ctaText: "Remove Objects",
+    href: "/sign-in"
   },
   {
-    id: "interior-ai",
-    title: "Interior AI",
-    description: "Redesign your interior space with more than 20 unique styles. Create beautiful, functional interiors that match your vision with AI-powered design recommendations.",
-    beforeImage: "/vintage.webp",
-    afterImage: "/tropical.webp",
+    id: "furnish-space",
+    title: "Smart Furnishing",
+    description: "Transform empty rooms into fully furnished, magazine-worthy spaces. Our AI analyzes your room's dimensions and style to suggest perfect furniture placement and decor combinations.",
+    beforeImage: "/after5.webp",
+    afterImage: "/before5.webp",
     isVideo: false,
-    ctaText: "Try Interior AI",
-    href: "/dashboard/redecorate-room"
-  }
+    ctaText: "Furnish My Space",
+    href: "/sign-in"
+  },
+
 ];
 
 const videoProductionData = [
@@ -82,24 +86,11 @@ function ToolCard({ tool, index }: { tool: typeof toolsData[0], index: number })
       viewport={{ once: true }}
     >
       <div className="relative h-[400px] w-full overflow-hidden rounded-lg group">
-        {tool.isVideo ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          >
-            <source src={tool.videoSrc} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        ) : (
-          <ImageComparisonSlider 
-            beforeImage={tool.beforeImage!} 
-            afterImage={tool.afterImage!}
-            className="transition-transform duration-300 group-hover:scale-105"
-          />
-        )}
+        <ImageComparisonSlider 
+          beforeImage={tool.beforeImage!} 
+          afterImage={tool.afterImage!}
+          className="transition-transform duration-300 group-hover:scale-105"
+        />
       </div>
       <div className="space-y-4">
         <h3 className="text-2xl font-bold text-gray-900">
@@ -164,7 +155,7 @@ function VideoProductionCard({ data, index }: { data: typeof videoProductionData
           Your browser does not support the video tag.
         </video>
         <div className="absolute top-4 left-4 bg-gray-800 text-white px-3 py-1 rounded-md text-sm font-medium">
-          Video by Interior AI
+          Video by ArchiCassoAI
         </div>
       </div>
     </motion.div>
@@ -203,11 +194,40 @@ export default function ToolsSection() {
         transition={{ duration: 0.8, delay: 0.3 }}
         viewport={{ once: true }}
       >
-        <ImageComparisonSlider 
-          beforeImage="/modern.webp" 
-          afterImage="/coastal.webp"
-          className="w-full h-[600px] rounded-lg shadow-2xl"
-        />
+        <div className="relative w-full h-[600px] rounded-lg shadow-2xl overflow-hidden">
+          <ImageComparisonSlider 
+            beforeImage="/test.jpg" 
+            afterImage="/after-test.png"
+            className="w-full h-full"
+          />
+        </div>
+      </motion.div>
+
+      {/* Sketch to Image AI Content - Hero */}
+      <motion.div 
+        className="text-center mb-20"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+        viewport={{ once: true }}
+      >
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          Sketch to Image{" "}
+          <span className="border rounded-md p-2 text-sm bg-[#3b82f6] text-white border-[#3b82f6]">
+            AI
+          </span>
+        </h2>
+        <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8 max-w-3xl mx-auto">
+          Transform your hand-drawn or digital sketches into stunning, fully rendered shots. Unlock the power of generating design variations from a single sketch.
+        </p>
+        
+        <Button 
+          size="lg" 
+          className="bg-[#3b82f6] hover:bg-[#2563eb] text-white text-lg px-8 py-3 mb-8"
+          onClick={() => window.location.href = "/sign-in"}
+        >
+          Try Sketch to Image
+        </Button>
       </motion.div>
 
       {/* Tools Grid */}
@@ -216,6 +236,39 @@ export default function ToolsSection() {
           <ToolCard key={tool.id} tool={tool} index={index} />
         ))}
       </div>
+
+             {/* Redecorate Your Room AI Content - End of Tools */}
+               <motion.div 
+          className="text-center mb-32"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Generate Video From Images <span className="border rounded-md p-2 text-sm bg-[#3b82f6] text-white border-[#3b82f6]">AI</span>
+          </h2>
+          <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8 max-w-4xl mx-auto">
+                        Transform any static image into a stunning 10-second video with one click in just 2 seconds. Our AI analyzes your image and creates smooth, cinematic motion that brings your designs to life. Perfect for showcasing architectural projects, interior transformations, or any space you want to animate with professional-quality results.
+          </p>
+          <Button 
+            size="lg" 
+            className="bg-[#3b82f6] hover:bg-[#2563eb] text-white text-lg px-8 py-3 mb-8"
+            onClick={() => window.location.href = "/sign-in"}
+          >
+            Generate Video Now
+          </Button>
+                 {/* Before/After Slider */}
+         <div>
+           <div className="relative w-full h-[600px] rounded-lg shadow-2xl overflow-hidden">
+             <ImageComparisonSlider 
+               beforeImage="/vid-before.png" 
+               afterImage="/thumb.mp4"
+               className="w-full h-full"
+             />
+           </div>
+         </div>
+      </motion.div>
 
       {/* Video Production Section */}
       <motion.div

@@ -1,15 +1,22 @@
-# InteriorAI Pro
+# ArchiCassoAI - Interior Design Platform
 
-AI-powered interior and exterior design platform built with Next.js, Drizzle ORM, and modern web technologies.
+Transform your space with AI-powered interior design tools.
+
+## Features
+
+- **AI-Powered Design**: Generate stunning interior designs using artificial intelligence
+- **Multiple Tools**: Room redesign, furniture placement, style matching, and more
+- **Video Generation**: Create dynamic videos of your designs
+- **Professional Results**: High-quality outputs suitable for commercial use
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with App Router
-- **Database**: Neon.tech PostgreSQL with Drizzle ORM
-- **Authentication**: BetterAuth with Google OAuth
-- **API**: tRPC for type-safe APIs
-- **UI**: Shadcn UI components with Tailwind CSS
-- **State Management**: Tanstack Query
+- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Database**: PostgreSQL with Neon, Drizzle ORM
+- **Authentication**: NextAuth.js
+- **Payments**: Creem.io
+- **AI Services**: Vercel AI SDK, Gemini, Replicate
 - **Deployment**: Vercel
 
 ## Getting Started
@@ -17,106 +24,129 @@ AI-powered interior and exterior design platform built with Next.js, Drizzle ORM
 ### Prerequisites
 
 - Node.js 18+ 
-- npm or yarn
-- Neon.tech database account
-- Google OAuth credentials
+- PostgreSQL database (recommend Neon)
+- Creem.io account for payments
 
 ### Installation
 
-1. Clone the repository
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd interior
+```
+
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. Set up environment variables:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Fill in your actual values in `.env.local`
+
+Create a `.env.local` file in the root directory:
+
+```bash
+# Database
+DATABASE_URL="your_neon_postgresql_url"
+
+# Authentication
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your_nextauth_secret"
+
+# Creem Payment Gateway
+CREEM_SECRET_KEY="your_creem_secret_key"
+CREEM_PUBLISHABLE_KEY="your_creem_publishable_key"
+CREEM_WEBHOOK_SECRET="your_creem_webhook_secret"
+
+# AI Services
+GOOGLE_GENERATIVE_AI_API_KEY="your_gemini_api_key"
+REPLICATE_API_TOKEN="your_replicate_token"
+```
 
 4. Set up the database:
-   ```bash
-   npm run db:push
-   ```
+```bash
+npm run db:push
+```
 
 5. Run the development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+npm run dev
+```
 
-## Environment Variables
+Visit [http://localhost:3000](http://localhost:3000) to see the application.
 
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | Neon.tech PostgreSQL connection string |
-| `BETTER_AUTH_SECRET` | Secret key for BetterAuth |
-| `BETTER_AUTH_URL` | Your app URL (http://localhost:3000 for dev) |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+## Payment Integration
 
-## Database Commands
+This project uses Creem.io for subscription billing and payment processing:
 
-- `npm run db:generate` - Generate migrations
-- `npm run db:migrate` - Run migrations
-- `npm run db:push` - Push schema changes to database
-- `npm run db:studio` - Open Drizzle Studio
+### Creem.io Setup
+
+1. **Create Account**: Sign up at [creem.io](https://creem.io)
+2. **Get API Keys**: Obtain your secret and publishable keys from the dashboard
+3. **Configure Webhooks**: Set webhook endpoint to `https://yourdomain.com/api/webhooks/creem`
+4. **Environment Variables**: Add your Creem keys to `.env.local`
+
+### Payment Features
+
+- **Subscription Plans**: Basic ($19/month), Pro ($39/month), Expert ($79/month)
+- **Annual Billing**: Discounted yearly pricing options
+- **Checkout Flow**: Secure payment processing with Creem
+- **Webhook Handling**: Automatic subscription status updates
+- **Customer Portal**: Self-service subscription management
+
+### Testing Payments
+
+Use Creem's test mode for development:
+- Test card numbers and webhooks are available in Creem documentation
+- Switch to production keys when ready to go live
 
 ## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
+├── app/                    # Next.js app router
+│   ├── api/               # API routes
+│   │   ├── checkout/      # Payment checkout endpoints
+│   │   └── webhooks/      # Webhook handlers
+│   ├── checkout/          # Payment success/cancel pages
+│   └── dashboard/         # Protected dashboard pages
 ├── components/            # React components
-│   └── ui/               # Shadcn UI components
-├── lib/                  # Core libraries
-│   ├── db/              # Database schema and config
-│   ├── server/          # tRPC server setup
-│   ├── auth.ts          # BetterAuth configuration
-│   └── trpc.ts          # tRPC client setup
-├── providers/           # Context providers
-└── hooks/              # Custom React hooks
+│   ├── landing/          # Landing page components
+│   ├── ui/               # shadcn/ui components
+│   └── layout/           # Layout components
+├── lib/                  # Utility libraries
+│   ├── creem.ts         # Creem payment service
+│   ├── db/              # Database schema and connection
+│   └── ai/              # AI service integrations
+└── providers/            # Context providers
 ```
 
-## Development Guidelines
+## Deployment
 
-### Code Style
-- Use TypeScript for all new files
-- Follow the existing component patterns
-- Use the provided ESLint configuration
-- Run `npm run lint` before committing
+1. **Vercel Deployment**:
+   - Connect your GitHub repository to Vercel
+   - Add environment variables in Vercel dashboard
+   - Deploy
 
-### Component Structure
-- Use functional components with TypeScript
-- Follow Shadcn UI patterns for consistency
-- Implement proper loading and error states
-- Ensure responsive design
+2. **Database Migration**:
+   ```bash
+   npm run db:push
+   ```
 
-### Database Changes
-- Always use Drizzle migrations
-- Test database changes locally first
-- Update the schema documentation
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run db:*` - Database commands (see above)
+3. **Webhook Configuration**:
+   - Update Creem webhook URL to your production domain
+   - Test webhook delivery
 
 ## Contributing
 
-1. Create a feature branch from `main`
-2. Make your changes
-3. Test thoroughly
-4. Create a pull request
-5. Ensure CI checks pass
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-## Next Steps
+## License
 
-Phase 1 is complete! You can now:
-1. Set up your Neon.tech database and update DATABASE_URL
-2. Configure Google OAuth credentials
-3. Run `npm run db:push` to create the database schema
-4. Start building Phase 2 features (Dashboard)
+[Add your license here]
+
+## Support
+
+For support, email support@archicassoai.com or create an issue in this repository.

@@ -17,7 +17,7 @@ const features = [
       <>
         <Safari
           src={`/modern.webp`}
-          url="https://interiorai.com"
+          url="https://archicassoai.com"
           className="-mb-32 mt-4 max-h-64 w-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-y-[-10px] transition-all duration-300"
         />
       </>
@@ -32,7 +32,7 @@ const features = [
     content: (
       <Safari
         src={`/coastal.webp`}
-        url="https://interiorai.com"
+        url="https://archicassoai.com"
         className="-mb-32 mt-4 max-h-64 w-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-y-[-10px] transition-all duration-300"
       />
     ),
@@ -57,7 +57,7 @@ const features = [
         />
         <Safari
           src={`/vintage.webp`}
-          url="https://interiorai.com"
+          url="https://archicassoai.com"
           className="-mb-48 ml-12 mt-16 h-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-x-[-10px] transition-all duration-300"
         />
       </>
@@ -74,7 +74,7 @@ const features = [
         <Ripple className="absolute -bottom-full" />
         <Safari
           src={`/tropical.webp`}
-          url="https://interiorai.com"
+          url="https://archicassoai.com"
           className="-mb-32 mt-4 max-h-64 w-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-y-[-10px] transition-all duration-300"
         />
       </>

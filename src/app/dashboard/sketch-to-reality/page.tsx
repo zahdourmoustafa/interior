@@ -105,6 +105,12 @@ export default function SketchToRealityPage() {
       return;
     }
     
+    // Check if image is still uploading (blob URL means upload not complete)
+    if (selectedImage.startsWith('blob:')) {
+      toast.error('Please wait for the sketch upload to complete before generating');
+      return;
+    }
+    
     if (!selectedRoomType) {
       toast.error('Please select a room type');
       return;
@@ -123,7 +129,7 @@ export default function SketchToRealityPage() {
 
     setIsGenerating(true);
     setGeneratingSlot(nextSlot);
-    toast.loading(`🏠 Converting your sketch to reality in slot ${nextSlot + 1}... This may take 30-60 seconds`);
+    toast.loading(`🏠 Converting sketch to reality in slot ${nextSlot + 1}... This may take 30-60 seconds`);
     
     console.log('🏠 Starting sketch-to-reality generation with:', {
       roomType: selectedRoomType,

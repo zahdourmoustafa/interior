@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 
-import { Icons } from "@/components/icons";
 import HeroVideoDialog from "@/components/magicui/hero-video";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,20 +13,20 @@ function HeroPill() {
   return (
     <motion.a
       href="/blog/introducing-interior-ai"
-      className="flex w-auto items-center space-x-2 rounded-full bg-primary/20 px-2 py-1 ring-1 ring-accent whitespace-pre"
+      className="flex w-auto items-center space-x-2 rounded-full bg-primary/20 px-3 py-2 ring-1 ring-accent whitespace-pre"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease }}
     >
-      <div className="w-fit rounded-full bg-accent px-2 py-0.5 text-center text-xs font-medium text-primary sm:text-sm">
+      <div className="w-fit rounded-full bg-accent px-3 py-1 text-center text-sm font-medium text-primary sm:text-base">
         🎨 New Feature
       </div>
-      <p className="text-xs font-medium text-primary sm:text-sm">
-        Introducing Interior AI
+      <p className="text-sm font-medium text-primary sm:text-base">
+        Introducing ArchiCassoAI
       </p>
       <svg
-        width="12"
-        height="12"
+        width="16"
+        height="16"
         className="ml-1"
         viewBox="0 0 12 12"
         fill="none"
@@ -44,9 +43,9 @@ function HeroPill() {
 
 function HeroTitles() {
   return (
-    <div className="flex w-full max-w-2xl flex-col space-y-4 overflow-hidden pt-8">
+    <div className="flex w-full max-w-4xl flex-col space-y-4 overflow-hidden pt-8">
       <motion.h1
-        className="text-center text-4xl font-medium leading-tight text-foreground sm:text-5xl md:text-6xl"
+        className="text-center text-4xl font-bold leading-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl"
         initial={{ filter: "blur(10px)", opacity: 0, y: 50 }}
         animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
         transition={{
@@ -55,10 +54,12 @@ function HeroTitles() {
           staggerChildren: 0.2,
         }}
       >
-        {["Transform", "your", "space", "with AI"].map((text, index) => (
+        {["Architecture", "AI Design Assistant"].map((text, index) => (
           <motion.span
             key={index}
-            className="inline-block px-1 md:px-2 text-balance font-semibold"
+            className={`inline-block px-2 md:px-4 text-balance font-black ${
+              index === 0 ? "text-blue-600" : ""
+            }`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -72,7 +73,7 @@ function HeroTitles() {
         ))}
       </motion.h1>
       <motion.p
-        className="mx-auto max-w-xl text-center text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-9 text-balance"
+        className="mx-auto max-w-2xl text-center text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8 text-balance font-medium"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -81,7 +82,7 @@ function HeroTitles() {
           ease,
         }}
       >
-        No matter what style you prefer, our AI can help you create the perfect interior design.
+        AI Render tools for architecture & interior design. 1-click Sketch to Render in seconds.
       </motion.p>
     </div>
   );
@@ -91,24 +92,23 @@ function HeroCTA() {
   return (
     <>
       <motion.div
-        className="mx-auto mt-6 flex w-full max-w-2xl flex-col items-center justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0"
+        className="mx-auto mt-8 flex w-full max-w-2xl flex-col items-center justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.8, ease }}
       >
-        <Link
-          href="/dashboard"
-          className={cn(
-            buttonVariants({ variant: "default" }),
-            "w-full sm:w-auto text-background flex gap-2"
-          )}
-        >
-          <Icons.logo className="h-6 w-6" />
-          Start Designing Now
+                 <Link
+           href="/sign-in"
+           className={cn(
+             buttonVariants({ variant: "default", size: "lg" }),
+             "w-full sm:w-auto text-background text-lg px-8 py-4 font-semibold"
+           )}
+         >
+          Start Rendering. It&apos;s Free
         </Link>
       </motion.div>
       <motion.p
-        className="mt-5 text-sm text-muted-foreground"
+        className="mt-6 text-base text-muted-foreground font-medium"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.0, duration: 0.8 }}
@@ -131,8 +131,8 @@ function HeroImage() {
         animationStyle="from-center"
         videoSrc="https://www.youtube.com/embed/demo-interior-ai"
         thumbnailSrc="/modern.webp"
-        thumbnailAlt="Interior AI Demo"
-        className="border rounded-lg shadow-lg max-w-screen-lg mt-16"
+        thumbnailAlt="ArchiCassoAI Demo"
+        className="border rounded-lg shadow-lg max-w-screen-lg mt-20"
       />
     </motion.div>
   );
@@ -141,7 +141,7 @@ function HeroImage() {
 export default function HeroSection() {
   return (
     <section id="hero">
-      <div className="relative flex w-full flex-col items-center justify-start px-4 pt-32 sm:px-6 sm:pt-24 md:pt-32 lg:px-8">
+      <div className="relative flex w-full flex-col items-center justify-start px-4 pt-32 sm:px-6 sm:pt-24 md:pt-32 lg:px-8 pb-16">
         <HeroPill />
         <HeroTitles />
         <HeroCTA />

@@ -18,7 +18,7 @@ export default function SignInPage() {
           <div className="relative w-12 h-12">
             <Image
               src="/next.svg"
-              alt="Interior AI"
+              alt="ArchiCassoAI"
               fill
               className="object-contain"
             />

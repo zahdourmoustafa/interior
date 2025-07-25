@@ -19,6 +19,14 @@ export function ImageComparisonSlider({
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to check if a file is a video
+  const isVideo = (src: string) => {
+    return src.toLowerCase().endsWith('.mp4') || 
+           src.toLowerCase().endsWith('.webm') || 
+           src.toLowerCase().endsWith('.ogg') ||
+           src.toLowerCase().endsWith('.mov');
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -95,6 +103,33 @@ export function ImageComparisonSlider({
     };
   }, [isDragging]);
 
+  // Render media element (image or video)
+  const renderMedia = (src: string, alt: string) => {
+    if (isVideo(src)) {
+      return (
+        <video
+          src={src}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="object-cover pointer-events-none"
+          style={{ width: '100%', height: '100%' }}
+        />
+      );
+    } else {
+      return (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          className="object-cover pointer-events-none"
+          draggable={false}
+        />
+      );
+    }
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -107,21 +142,15 @@ export function ImageComparisonSlider({
       onMouseUp={handleMouseUp}
       style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
     >
-      {/* Before Image (Right side) */}
+      {/* Before Image/Video (Right side) */}
       <div className="absolute inset-0 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}>
-        <Image
-          src={beforeImage}
-          alt="Before"
-          fill
-          className="object-cover pointer-events-none"
-          draggable={false}
-        />
+        {renderMedia(beforeImage, "Before")}
         <div className="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-sm pointer-events-none">
           Before
         </div>
       </div>
 
-      {/* After Image (Left side) */}
+      {/* After Image/Video (Left side) */}
       <div 
         className="absolute inset-0 overflow-hidden select-none"
         style={{ 
@@ -132,13 +161,7 @@ export function ImageComparisonSlider({
           msUserSelect: 'none' 
         }}
       >
-        <Image
-          src={afterImage}
-          alt="After"
-          fill
-          className="object-cover pointer-events-none"
-          draggable={false}
-        />
+        {renderMedia(afterImage, "After")}
         <div className="absolute bottom-4 left-4 bg-black/70 text-white px-2 py-1 rounded text-sm pointer-events-none">
           After
         </div>

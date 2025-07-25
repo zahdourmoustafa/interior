@@ -3,6 +3,17 @@ import { put } from "@vercel/blob";
 import mime from "mime";
 import { furnishEmptySpaceSystemPrompt } from "./prompts/furnish-prompt";
 
+// Extended interface for Gemini 2.0 image generation that includes responseModalities
+interface ExtendedGenerationConfig {
+  temperature?: number;
+  responseModalities?: string[];
+  maxOutputTokens?: number;
+  topK?: number;
+  topP?: number;
+  candidateCount?: number;
+  stopSequences?: string[];
+}
+
 // Initialize Google AI with proper error handling
 const getGoogleAI = () => {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
@@ -29,14 +40,116 @@ const getGoogleAI = () => {
 };
 
 async function urlToGenerativePart(url: string, mimeType: string): Promise<Part> {
-  const response = await fetch(url);
-  const buffer = await response.arrayBuffer();
-  return {
-    inlineData: {
-      data: Buffer.from(buffer).toString("base64"),
-      mimeType,
-    },
-  };
+  // Validate URL type
+  if (url.startsWith('blob:')) {
+    throw new Error(
+      'Blob URLs cannot be processed on the server. Please wait for the image upload to complete before generating.'
+    );
+  }
+
+  if (url.startsWith('data:')) {
+    // Handle data URLs
+    const base64Data = url.split(',')[1];
+    return {
+      inlineData: {
+        data: base64Data,
+        mimeType,
+      },
+    };
+  }
+
+  // Handle regular HTTP/HTTPS URLs
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    throw new Error(
+      `Invalid URL format: ${url}. Only HTTP, HTTPS, and data URLs are supported.`
+    );
+  }
+
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    }
+    
+    const buffer = await response.arrayBuffer();
+    return {
+      inlineData: {
+        data: Buffer.from(buffer).toString("base64"),
+        mimeType,
+      },
+    };
+  } catch (error) {
+    console.error('❌ Failed to fetch image from URL:', url, error);
+    throw new Error(
+      `Failed to load image from URL. Please ensure the image is accessible and try again. Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+async function getImageDimensions(url: string): Promise<{ width: number; height: number }> {
+  try {
+    // Handle blob URLs
+    if (url.startsWith('blob:')) {
+      console.warn('⚠️ Cannot get dimensions from blob URL on server, using fallback dimensions');
+      return { width: 1024, height: 1024 };
+    }
+
+    // Handle data URLs
+    if (url.startsWith('data:')) {
+      const base64Data = url.split(',')[1];
+      const buffer = Buffer.from(base64Data, 'base64');
+      const uint8Array = new Uint8Array(buffer);
+      
+      // Try to parse dimensions from the data
+      return parseDimensionsFromImageData(uint8Array);
+    }
+
+    // Handle regular HTTP/HTTPS URLs
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      console.warn('⚠️ Invalid URL format for dimensions, using fallback');
+      return { width: 1024, height: 1024 };
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn('⚠️ Failed to fetch image for dimensions, using fallback');
+      return { width: 1024, height: 1024 };
+    }
+    
+    const buffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(buffer);
+    
+    return parseDimensionsFromImageData(uint8Array);
+  } catch (error) {
+    console.error("Failed to get image dimensions:", error);
+    return { width: 1024, height: 1024 };
+  }
+}
+
+function parseDimensionsFromImageData(uint8Array: Uint8Array): { width: number; height: number } {
+  // Check if it's a PNG
+  if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4E && uint8Array[3] === 0x47) {
+    const width = (uint8Array[16] << 24) | (uint8Array[17] << 16) | (uint8Array[18] << 8) | uint8Array[19];
+    const height = (uint8Array[20] << 24) | (uint8Array[21] << 16) | (uint8Array[22] << 8) | uint8Array[23];
+    return { width, height };
+  }
+  
+  // Check if it's a JPEG
+  if (uint8Array[0] === 0xFF && uint8Array[1] === 0xD8) {
+    let i = 2;
+    while (i < uint8Array.length) {
+      if (uint8Array[i] === 0xFF && uint8Array[i + 1] === 0xC0) {
+        const height = (uint8Array[i + 5] << 8) | uint8Array[i + 6];
+        const width = (uint8Array[i + 7] << 8) | uint8Array[i + 8];
+        return { width, height };
+      }
+      i++;
+    }
+  }
+  
+  // Default fallback if we can't parse the dimensions
+  return { width: 1024, height: 1024 };
 }
 
 function getMimeTypeFromUrl(url: string): string {
@@ -87,18 +200,12 @@ export class GeminiService {
         getMimeTypeFromUrl(input.imageUrl)
       );
 
-      const generationConfig = {
-        quality: "hd", // Use 'hd' for higher quality
-        responseMimeType: "image/png", // Request a high-quality PNG
-        temperature: 0.4, // Lower temperature for more predictable, less "creative" results
-        negativePrompt: [
-          "blurry, grainy, low-resolution, unrealistic, cartoonish, discolored, watermark, signature, text",
-        ],
-      };
-
       const model = ai.getGenerativeModel({
         model: this.IMAGE_GENERATION_MODEL,
-        generationConfig,
+        generationConfig: {
+          temperature: 0.4,
+          responseModalities: ["TEXT", "IMAGE"],
+        } as ExtendedGenerationConfig,
       });
 
       const contents = [
@@ -106,11 +213,9 @@ export class GeminiService {
           role: "user",
           parts: [
             imagePart,
-            {
-              text:
-                input.prompt ||
-                this.generateDefaultPrompt(input.roomType!, input.designStyle!),
-            },
+                         {
+               text: this.generateDefaultPrompt(input.roomType!, input.designStyle!),
+             },
           ],
         },
       ];
@@ -178,18 +283,12 @@ export class GeminiService {
         getMimeTypeFromUrl(input.imageUrl)
       );
 
-      const generationConfig = {
-        quality: "hd", // Use 'hd' for higher quality
-        responseMimeType: "image/png", // Request a high-quality PNG
-        temperature: 0.4, // Lower temperature for more predictable, less "creative" results
-        negativePrompt: [
-          "blurry, grainy, low-resolution, unrealistic, cartoonish, discolored, watermark, signature, text",
-        ],
-      };
-
       const model = ai.getGenerativeModel({
         model: this.IMAGE_GENERATION_MODEL,
-        generationConfig,
+        generationConfig: {
+          temperature: 0.4,
+          responseModalities: ["TEXT", "IMAGE"],
+        } as ExtendedGenerationConfig,
       });
 
       const contents = [
@@ -197,14 +296,12 @@ export class GeminiService {
           role: "user",
           parts: [
             imagePart,
-            {
-              text:
-                input.prompt ||
-                this.generateSketchToRealityPrompt(
-                  input.roomType || '',
-                  input.designStyle || ''
-                ),
-            },
+                         {
+               text: this.generateSketchToRealityPrompt(
+                 input.roomType || '',
+                 input.designStyle || ''
+               ),
+             },
           ],
         },
       ];
@@ -268,9 +365,12 @@ export class GeminiService {
 
       const ai = getGoogleAI();
 
-      const model = ai.getGenerativeModel({
-        model: this.IMAGE_GENERATION_MODEL,
-      });
+                                                       const model = ai.getGenerativeModel({
+           model: this.IMAGE_GENERATION_MODEL,
+           generationConfig: {
+             responseModalities: ["TEXT", "IMAGE"],
+           } as ExtendedGenerationConfig,
+         });
 
       const contents = [
         {
@@ -347,19 +447,13 @@ export class GeminiService {
         getMimeTypeFromUrl(input.imageUrl)
       );
 
-      const generationConfig = {
-        quality: "hd",
-        responseMimeType: "image/png",
-        temperature: 0.5,
-        negativePrompt: [
-          "blurry, grainy, low-resolution, unrealistic, cartoonish, discolored, watermark, signature, text",
-        ],
-      };
-
-      const model = ai.getGenerativeModel({
-        model: this.IMAGE_GENERATION_MODEL,
-        generationConfig,
-      });
+                           const model = ai.getGenerativeModel({
+          model: this.IMAGE_GENERATION_MODEL,
+          generationConfig: {
+            temperature: 0.5,
+            responseModalities: ["TEXT", "IMAGE"],
+          } as ExtendedGenerationConfig,
+        });
 
       const fullPrompt = `${furnishEmptySpaceSystemPrompt}\n\nUser Prompt: "${input.prompt}"`;
       
@@ -433,6 +527,10 @@ export class GeminiService {
 
       const ai = getGoogleAI();
 
+      // Get original image dimensions
+      const dimensions = await getImageDimensions(input.imageUrl);
+      console.log("📐 Original image dimensions:", dimensions);
+
       // Process the original image
       const imagePart = await urlToGenerativePart(
         input.imageUrl,
@@ -447,30 +545,44 @@ export class GeminiService {
         parts.push(maskPart);
       }
 
-      const generationConfig = {
-        quality: "hd", // Use 'hd' for higher quality
-        responseMimeType: "image/png", // Request a high-quality PNG
-        temperature: 0.2, // Lower temperature for more predictable results
-        negativePrompt: [
-          "blurry, grainy, low-resolution, unrealistic, cartoonish, discolored, watermark, signature, text",
-        ],
-      };
-
-      const model = ai.getGenerativeModel({
-        model: this.IMAGE_GENERATION_MODEL,
-        generationConfig,
-      });
+                                                       const model = ai.getGenerativeModel({
+           model: this.IMAGE_GENERATION_MODEL,
+           generationConfig: {
+             temperature: 0.2,
+             responseModalities: ["TEXT", "IMAGE"],
+           } as ExtendedGenerationConfig,
+         });
 
       // Create a prompt that instructs Gemini to remove the object marked by the red mask
-      const removeObjectPrompt = `\n        You are a professional photo editor specializing in object removal. \n        ${
+      const removeObjectPrompt = `You are a professional photo editor specializing in object removal. 
+        ${
           input.mask
-            ? `I'm providing two images:\n        1. The original image\n        2. The same image with a red mask highlighting the object to be removed\n        \n        Please remove ONLY the object highlighted by the red mask and replace it with appropriate background content that matches the surrounding area.`
+            ? `I'm providing two images:
+        1. The original image
+        2. The same image with a red mask highlighting the object to be removed
+        
+        Please remove ONLY the object highlighted by the red mask and replace it with appropriate background content that matches the surrounding area.`
             : "I'm providing an image and a prompt."
-        }\n        \n        The user has provided the following instruction: "${input.prompt}"\n\n        Important requirements:\n        - ${
+        }
+        
+        The user has provided the following instruction: "${input.prompt}"
+
+                 CRITICAL REQUIREMENTS:
+         - ${
           input.mask
             ? "Remove ONLY the red-masked area"
             : "Follow the user's prompt to remove the object."
-        }\n        - Use inpainting to fill the removed area naturally\n        - Maintain the exact same perspective, lighting, and style as the original image\n        - Ensure the result looks completely natural with no artifacts\n        - Do not alter any other part of the image\n        - Preserve the original image dimensions and quality\n        \n        Generate a photorealistic result that makes it appear as if the object was never there.\n      `;
+        }
+         - The original image is ${dimensions.width}x${dimensions.height} pixels. Generate the output image with EXACTLY these same dimensions: ${dimensions.width}x${dimensions.height} pixels
+         - MAINTAIN THE EXACT SAME IMAGE DIMENSIONS, ASPECT RATIO, AND RESOLUTION as the original image
+         - Use inpainting to fill the removed area naturally with content that matches the surrounding environment
+         - Preserve the exact same perspective, lighting, shadows, and photographic style as the original
+         - Ensure seamless blending with no visible artifacts, seams, or inconsistencies
+         - Do not crop, resize, add borders, or alter the composition in any way
+         - Keep all unmasked areas completely unchanged and identical to the original
+         - Output dimensions must be exactly ${dimensions.width} pixels wide by ${dimensions.height} pixels tall
+         
+         Generate a photorealistic result that makes it appear as if the object was never there, while preserving every pixel of the original image dimensions and quality.`;
 
       parts.push({ text: removeObjectPrompt });
 

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserProfile } from './user-profile';
+import { Icons } from "@/components/icons";
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -45,7 +46,13 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Logo/Brand Section */}
       <div className="p-6">
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-black whitespace-nowrap">arch</h1>
+          <Icons.logo className="h-8 w-8 text-[#3b82f6]" />
+          <span className={cn(
+            "ml-3 font-bold text-black transition-opacity duration-300",
+            isExpanded || isHovering ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+          )}>
+            ArchiCassoAI
+          </span>
         </div>
       </div>
       

@@ -106,9 +106,9 @@ function GalleryCard({ item, index }: { item: typeof galleryData[0], index: numb
           </p>
         </div>
         
-        {/* Interior AI Badge */}
+        {/* ArchiCassoAI Badge */}
         <div className="absolute top-4 right-4 bg-[#3b82f6] text-white px-3 py-1 rounded-full text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          Interior AI
+          ArchiCassoAI
         </div>
       </div>
     </motion.div>
@@ -149,7 +149,7 @@ export default function GalleryCarousel() {
   return (
     <Section
       title="Gallery"
-      subtitle="Rooms that Interior AI created"
+      subtitle="Rooms that ArchiCassoAI created"
       description="Explore our collection of stunning AI-generated interior designs"
       className="bg-white dark:bg-gray-900 overflow-hidden"
     >
