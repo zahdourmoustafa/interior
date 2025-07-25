@@ -25,12 +25,13 @@ class CreemService {
 
   constructor() {
     this.secretKey = process.env.CREEM_SECRET_KEY || ''
-    if (!this.secretKey) {
-      throw new Error('CREEM_SECRET_KEY is not configured')
-    }
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}) {
+    if (!this.secretKey) {
+      throw new Error('CREEM_SECRET_KEY is not configured. Please add it to your environment variables.')
+    }
+    
     const url = `${this.baseUrl}${endpoint}`
     
     const response = await fetch(url, {
@@ -53,12 +54,6 @@ class CreemService {
   async createCheckoutSession(data: CheckoutSessionData): Promise<CreemCheckoutSession> {
     if (!data.productId) {
       throw new Error('Product ID is required for Creem checkout')
-    }
-    
-    // Note: Currently only monthly products are set up
-    // For yearly billing, you'll need to create separate yearly products in Creem
-    if (data.isYearly) {
-      console.warn('Yearly billing requested but only monthly products are configured. Using monthly product.')
     }
     
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
@@ -145,13 +140,22 @@ class CreemService {
     const priceString = plan.price.replace('$', '')
     const yearlyPriceString = plan.yearlyPrice.replace('$', '')
     
+    // Use yearly product ID if yearly billing is selected and available, otherwise use monthly
+    const productId = isYearly && plan.creemYearlyProductId 
+      ? plan.creemYearlyProductId 
+      : plan.creemProductId
+    
+    if (isYearly && !plan.creemYearlyProductId) {
+      throw new Error(`Yearly product ID not configured for plan: ${plan.name}`)
+    }
+    
     return {
       planId: plan.name.toLowerCase().replace(' ', '_'),
       planName: plan.name,
       price: parseFloat(priceString),
       yearlyPrice: parseFloat(yearlyPriceString),
       isYearly,
-      productId: plan.creemProductId,
+      productId,
     }
   }
 }
