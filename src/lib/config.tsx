@@ -99,6 +99,7 @@ export const siteConfig = {
       description: "Explore AI tools to elevate your design workflow.",
       credits: "1,000 Credits",
       creemProductId: "prod_5TBCtzyYf2Tscj5szrdY1y",
+      creemYearlyProductId: "prod_2W5HGmFsqtRaBZWJtQCIBj",
       features: [
         "100 Designs",
         "12 Videos",
@@ -119,6 +120,7 @@ export const siteConfig = {
       description: "Generate amazing designs and visuals at fraction of cost.",
       credits: "5,000 Credits",
       creemProductId: "prod_4iQOMKeKCamCrX4tAK15N9",
+      creemYearlyProductId: "prod_116oWhJXp8LIVDokOR9H8o",
       features: [
         "500 Designs",
         "65 Videos",
@@ -140,6 +142,7 @@ export const siteConfig = {
       description: "Optimize your design workflow and serve your clients fast.",
       credits: "10,000 Credits",
       creemProductId: "prod_32FFPjxTeZSLIdHHNscTkz",
+      creemYearlyProductId: "prod_BELMOK9c6UDTkYgPcgWGE",
       features: [
         "1000 Designs",
         "130 Videos",
@@ -271,6 +274,7 @@ export interface PricingPlan {
   features: string[];
   isPopular?: boolean;
   creemProductId?: string;
+  creemYearlyProductId?: string;
   creemMonthlyPriceId?: string;
   creemYearlyPriceId?: string;
 } 
