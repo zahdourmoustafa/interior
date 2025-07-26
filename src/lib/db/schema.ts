@@ -1,10 +1,21 @@
-import { pgTable, uuid, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, integer, jsonb } from 'drizzle-orm/pg-core';
 import * as authSchema from '../../../auth-schema';
 
 export const users = authSchema.user;
 export const sessions = authSchema.session;
 export const accounts = authSchema.account;
 export const verifications = authSchema.verification;
+
+// Credit system table
+export const creditTransactions = pgTable('credit_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  featureUsed: varchar('feature_used', { length: 20 }).notNull(), // 'interior', 'exterior', 'sketch', 'furnish', 'remove', 'video', 'text'
+  creditsConsumed: integer('credits_consumed').default(1).notNull(),
+  generationId: text('generation_id'), // Link to specific generation
+  metadata: jsonb('metadata'), // Additional data like prompt, settings, etc.
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
 // Application tables
 export const images = pgTable('images', {
@@ -48,6 +59,7 @@ export const favorites = pgTable('favorites', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Image = typeof images.$inferSelect;
@@ -58,3 +70,5 @@ export type ImageStorage = typeof imageStorage.$inferSelect;
 export type NewImageStorage = typeof imageStorage.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
 export type NewFavorite = typeof favorites.$inferInsert;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type NewCreditTransaction = typeof creditTransactions.$inferInsert;

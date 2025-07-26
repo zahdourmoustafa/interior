@@ -23,6 +23,15 @@ const features = [
     generation: 1
   },
   {
+    title: 'Text to Design',
+    description: 'Create stunning interior designs from text descriptions. Just describe your vision and let AI bring it to life.',
+    href: '/dashboard/text-to-design',
+    backgroundImage: '/modern.webp',
+    minutes: 1,
+    generation: 1,
+    badgeText: 'NEW',
+    badgeVariant: 'new'
+  },  {
     title: 'Sketch',
     description: 'Transform your sketch into a beautiful image. Upload your draft, select a style, and let AI create the final design.',
     href: '/dashboard/sketch-to-reality',

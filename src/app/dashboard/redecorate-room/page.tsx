@@ -7,6 +7,7 @@ import { MainImageDisplay } from '@/components/redecorate/main-image-display';
 import { ControlSidebar } from '@/components/redecorate/control-sidebar';
 import { trpc } from '@/lib/trpc';
 import toast, { Toaster } from 'react-hot-toast';
+import { useCreditCheck } from '@/hooks/use-credit-check';
 
 export default function RedecorateRoomPage() {
   // State management
@@ -17,6 +18,19 @@ export default function RedecorateRoomPage() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
+
+  // Credit system integration
+  const { checkAndConsumeCredit, UpgradeModalComponent } = useCreditCheck({
+    feature: 'interior',
+    onSuccess: () => {
+      console.log('✅ Credit consumed successfully for interior design');
+    },
+    onError: (error) => {
+      console.error('❌ Credit error:', error);
+      setIsGenerating(false);
+      setGeneratingSlot(null);
+    }
+  });
 
   // Handlers
   const handleStyleSelect = (styleId: string) => {
@@ -58,8 +72,6 @@ export default function RedecorateRoomPage() {
       // Keep the preview URL if upload fails
     }
   };
-
-  
 
   const handleImageRemove = () => {
     setSelectedImage(null);
@@ -128,11 +140,31 @@ export default function RedecorateRoomPage() {
       return;
     }
 
+    // Set loading state
     setIsGenerating(true);
     setGeneratingSlot(nextSlot);
+    
+    // Generate unique ID for this generation
+    const generationId = `interior_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Check and consume credit before proceeding
+    const hasCredits = await checkAndConsumeCredit(generationId, {
+      roomType: selectedRoomType,
+      designStyle: selectedStyle,
+      imageUrl: selectedImage,
+      slot: nextSlot,
+    });
+
+    if (!hasCredits) {
+      // Credit check failed, loading state already cleared by onError callback
+      return;
+    }
+
+    // Credit consumed successfully, proceed with generation
     toast.loading(`🎨 Generating design in slot ${nextSlot + 1}... This may take 30-60 seconds`);
     
     console.log('🎨 Starting generation with:', {
+      generationId,
       roomType: selectedRoomType,
       designStyle: selectedStyle,
       imageUrl: selectedImage.substring(0, 50) + '...'
@@ -181,6 +213,9 @@ export default function RedecorateRoomPage() {
         />
       </div>
       
+      {/* Credit System Modal */}
+      <UpgradeModalComponent />
+      
       {/* Toast Notifications */}
       <Toaster
         position="top-right"
@@ -198,15 +233,9 @@ export default function RedecorateRoomPage() {
             },
           },
           error: {
-            duration: 5000,
+            duration: 4000,
             iconTheme: {
               primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-          loading: {
-            iconTheme: {
-              primary: '#3b82f6',
               secondary: '#fff',
             },
           },

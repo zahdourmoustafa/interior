@@ -9,6 +9,19 @@ import { ImagenService } from "../ai/imagen-service";
 import { PromptGenerator } from "../ai/prompt-generator";
 import { EnhancementService } from "../ai/enhancement-service";
 
+
+// Helper method to enhance images with rate limit handling
+const enhanceWithDelay = async (imageUrl: string): Promise<string> => {
+  try {
+    // Add delay to avoid rate limits
+    await new Promise(resolve => setTimeout(resolve, 3000)); // 3 second delay
+    return await EnhancementService.enhance(imageUrl);
+  } catch (error) {
+    console.warn('Enhancement failed, using original image:', error);
+    return imageUrl;
+  }
+};
+
 const t = initTRPC.create();
 
 export const router = t.router;
@@ -338,7 +351,7 @@ export const appRouter = router({
               await db.insert(images).values({
                 userId: ctx.user.id,
                 originalImageUrl: "", // No original image for text-to-design
-                generatedImageUrl: imageUrl,
+                generatedImageUrl: await enhanceWithDelay(imageUrl), // Enhanced image
                 roomType: "text-to-design",
                 style: "custom",
                 aiPromptUsed: input.prompt,
@@ -353,7 +366,7 @@ export const appRouter = router({
 
           return {
             jobId: result.jobId,
-            generatedImageUrl: result.imageUrls[0], // Return the first image for now
+            generatedImageUrl: await enhanceWithDelay(result.imageUrls[0]), // Return enhanced image
             status: result.status,
             error: result.error,
             prompt: input.prompt,

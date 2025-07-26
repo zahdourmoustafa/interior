@@ -9,7 +9,7 @@ const ENHANCEMENT_MODEL = "philz1337x/clarity-upscaler:dfad41707589d68ecdccd1dfa
 
 export class EnhancementService {
   /**
-   * Enhances an image using a dedicated AI upscaler.
+   * Enhances an image using a dedicated AI upscaler with rate limit handling.
    * @param imageUrl The URL of the image to enhance.
    * @returns The URL of the enhanced image. If enhancement fails, it returns the original image URL.
    */
@@ -23,22 +23,61 @@ export class EnhancementService {
         return imageUrl;
       }
 
-      // Use replicate.predictions.create for better control
-      const prediction = await replicate.predictions.create({
-        version: ENHANCEMENT_MODEL,
-        input: {
-          image: imageUrl,
-          prompt: "masterpiece, best quality, highres, <lora:more_details:0.5> <lora:SDXLrender_v2.0:1>",
-          negative_prompt: "(worst quality, low quality, normal quality:2) JuggernautNegative-neg",
-          scale_factor: 2,
-          dynamic: 6,
-          creativity: 0.35,
-          resemblance: 0.6,
-          sharpen: 0,
-          handfix: "disabled",
-          output_format: "png",
-        },
-      });
+      // Retry logic for rate limits
+      const maxRetries = 3;
+      let retryCount = 0;
+      let prediction;
+
+      while (retryCount < maxRetries) {
+        try {
+          // Use replicate.predictions.create for better control
+          prediction = await replicate.predictions.create({
+            version: ENHANCEMENT_MODEL,
+            input: {
+              image: imageUrl,
+              prompt: "masterpiece, best quality, highres, <lora:more_details:0.5> <lora:SDXLrender_v2.0:1>",
+              negative_prompt: "(worst quality, low quality, normal quality:2) JuggernautNegative-neg",
+              scale_factor: 2,
+              dynamic: 6,
+              creativity: 0.35,
+              resemblance: 0.6,
+              sharpen: 0,
+              handfix: "disabled",
+              output_format: "png",
+            },
+          });
+          
+          // If successful, break out of retry loop
+          break;
+          
+        } catch (error: any) {
+          // Check if it's a rate limit error
+          if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('throttled')) {
+            retryCount++;
+            const retryAfter = error.response?.headers?.['retry-after'] || 5; // Default to 5 seconds
+            const waitTime = Math.max(retryAfter * 1000, 5000); // Wait at least 5 seconds
+            
+            console.log(`⏳ Rate limited. Retry ${retryCount}/${maxRetries} after ${waitTime/1000}s...`);
+            
+            if (retryCount >= maxRetries) {
+              console.warn("Max retries reached for enhancement, using original image");
+              return imageUrl;
+            }
+            
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          } else {
+            // Non-rate-limit error, don't retry
+            throw error;
+          }
+        }
+      }
+
+      if (!prediction) {
+        console.warn("Failed to create prediction after retries, using original image");
+        return imageUrl;
+      }
 
       // Wait for the prediction to complete
       let completedPrediction = await replicate.predictions.get(prediction.id);
@@ -90,5 +129,42 @@ export class EnhancementService {
       console.error(`❌ Image enhancement failed for URL: ${imageUrl}`, error);
       return imageUrl; // Always fallback to original
     }
+  }
+
+  /**
+   * Enhanced version with exponential backoff for heavy usage scenarios
+   */
+  static async enhanceWithBackoff(imageUrl: string): Promise<string> {
+    const maxRetries = 5;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        return await this.enhance(imageUrl);
+      } catch (error: any) {
+        if (error.status === 429 || error.message?.includes('rate limit')) {
+          retryCount++;
+          // Exponential backoff: 2^retry * 1000ms + random jitter
+          const baseDelay = Math.pow(2, retryCount) * 1000;
+          const jitter = Math.random() * 1000;
+          const delay = baseDelay + jitter;
+          
+          console.log(`⏳ Rate limited. Exponential backoff retry ${retryCount}/${maxRetries} after ${delay/1000}s...`);
+          
+          if (retryCount >= maxRetries) {
+            console.warn("Max retries reached with exponential backoff, using original image");
+            return imageUrl;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          // Non-rate-limit error
+          console.error("Enhancement failed with non-rate-limit error:", error);
+          return imageUrl;
+        }
+      }
+    }
+    
+    return imageUrl;
   }
 }

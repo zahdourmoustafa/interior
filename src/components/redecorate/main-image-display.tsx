@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ImageDialog } from '@/components/ui/image-dialog';
+import { GenerationLoading } from '@/components/ui/generation-loading';
 
 interface MainImageDisplayProps {
   selectedImage: string | null;
@@ -18,6 +19,8 @@ interface MainImageDisplayProps {
   onImageRemove: () => void;
   onRemoveGeneratedImage: (index: number) => void;
   showUploadArea?: boolean;
+  feature?: 'interior' | 'exterior' | 'sketch' | 'furnish' | 'remove' | 'video' | 'text';
+  currentPrompt?: string;
 }
 
 // A sub-component for each slot in the grid
@@ -30,6 +33,8 @@ function ImageSlot({
   slotType = 'generated',
   slotIndex,
   showUploadArea = true,
+  feature = 'interior',
+  currentPrompt,
 }: {
   imageUrl: string | null;
   originalImageUrl?: string | null;
@@ -39,6 +44,8 @@ function ImageSlot({
   slotType?: 'upload' | 'generated';
   slotIndex?: number;
   showUploadArea?: boolean;
+  feature?: 'interior' | 'exterior' | 'sketch' | 'furnish' | 'remove' | 'video' | 'text';
+  currentPrompt?: string;
 }) {
   const [dragActive, setDragActive] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -119,12 +126,10 @@ function ImageSlot({
         )}
 
         {isGenerating && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
-            <div className="text-center text-white">
-              <Loader2 className="h-10 w-10 animate-spin mx-auto mb-3" />
-              <p className="font-medium">Generating...</p>
-            </div>
-          </div>
+          <GenerationLoading 
+            feature={feature} 
+            prompt={currentPrompt}
+          />
         )}
 
         {imageUrl && (
@@ -161,6 +166,8 @@ export function MainImageDisplay({
   onImageRemove,
   onRemoveGeneratedImage,
   showUploadArea = true,
+  feature = 'interior',
+  currentPrompt,
 }: MainImageDisplayProps) {
 
   const slots = [0, 1, 2, 3];
@@ -178,6 +185,8 @@ export function MainImageDisplay({
         slotType={generatedImages.length > 0 ? "generated" : "upload"}
         slotIndex={0}
         showUploadArea={showUploadArea}
+        feature={feature}
+        currentPrompt={currentPrompt}
       />
 
       {/* Other slots */}
@@ -189,6 +198,8 @@ export function MainImageDisplay({
           isGenerating={isGenerating && generatingSlot === index}
           onRemove={generatedImages[index] ? () => onRemoveGeneratedImage(index) : undefined}
           slotIndex={index}
+          feature={feature}
+          currentPrompt={currentPrompt}
         />
       ))}
     </div>

@@ -12,6 +12,13 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified"),
   image: text("image"),
+  // Credit system fields
+  creditsRemaining: integer("credits_remaining").default(6).notNull(),
+  creditsTotal: integer("credits_total").default(6).notNull(),
+  subscriptionStatus: text("subscription_status").default("free").notNull(),
+  subscriptionId: text("subscription_id"), // Creem subscription ID
+  planId: text("plan_id"), // Plan identifier (basic_plan, pro_plan, expert_plan)
+  creditsGrantedAt: timestamp("credits_granted_at").$defaultFn(() => new Date()),
   createdAt: timestamp("created_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),

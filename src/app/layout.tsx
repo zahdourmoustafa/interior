@@ -3,6 +3,7 @@ import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { AuthClientProvider } from "@/providers/auth-client-provider";
 import { TRPCProvider } from "@/providers/trpc-provider";
+import { CreditProvider } from "@/providers/credit-provider";
 import { Toaster } from "sonner";
 
 const bricolageGrotesque = Bricolage_Grotesque({
@@ -27,10 +28,12 @@ export default function RootLayout({
         className={`${bricolageGrotesque.variable} antialiased`}
       >
         <AuthClientProvider>
-          <TRPCProvider>
-            {children}
-            <Toaster />
-          </TRPCProvider>
+          <CreditProvider>
+            <TRPCProvider>
+              {children}
+              <Toaster />
+            </TRPCProvider>
+          </CreditProvider>
         </AuthClientProvider>
       </body>
     </html>

@@ -7,6 +7,7 @@ import { MainImageDisplay } from '@/components/redecorate/main-image-display';
 import { ControlSidebar } from '@/components/redecorate/control-sidebar';
 import { trpc } from '@/lib/trpc';
 import toast, { Toaster } from 'react-hot-toast';
+import { useCreditCheck } from '@/hooks/use-credit-check';
 
 export default function SketchToRealityPage() {
   // State management
@@ -17,6 +18,19 @@ export default function SketchToRealityPage() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
+
+  // Credit system integration
+  const { checkAndConsumeCredit, UpgradeModalComponent } = useCreditCheck({
+    feature: 'sketch',
+    onSuccess: () => {
+      console.log('✅ Credit consumed successfully for sketch to reality');
+    },
+    onError: (error) => {
+      console.error('❌ Credit error:', error);
+      setIsGenerating(false);
+      setGeneratingSlot(null);
+    }
+  });
 
   // Handlers
   const handleStyleSelect = (styleId: string) => {
@@ -30,6 +44,7 @@ export default function SketchToRealityPage() {
       // Create object URL for immediate preview
       const previewUrl = URL.createObjectURL(file);
       setSelectedImage(previewUrl);
+      setGeneratedImages([]); // Clear previous generations
 
       // Upload to server
       const formData = new FormData();
@@ -58,8 +73,6 @@ export default function SketchToRealityPage() {
     }
   };
 
-  
-
   const handleImageRemove = () => {
     setSelectedImage(null);
     setGeneratedImages([]);
@@ -81,15 +94,15 @@ export default function SketchToRealityPage() {
           }
           return newImages;
         });
-        toast.success('🏠 Your realistic design has been generated successfully!');
-        console.log('✅ Sketch-to-reality generation completed successfully');
+        toast.success('✨ Your sketch has been transformed to reality!');
+        console.log('✅ Sketch to reality generation completed successfully');
       } else if (data.error) {
         toast.error(`Generation failed: ${data.error}`);
         throw new Error(data.error);
       }
     },
     onError: (error) => {
-      console.error('❌ Generation failed:', error);
+      console.error('❌ Sketch to reality generation failed:', error);
       toast.error(`Generation failed: ${error.message}`);
     },
     onSettled: () => {
@@ -127,14 +140,34 @@ export default function SketchToRealityPage() {
       return;
     }
 
+    // Set loading state
     setIsGenerating(true);
     setGeneratingSlot(nextSlot);
-    toast.loading(`🏠 Converting sketch to reality in slot ${nextSlot + 1}... This may take 30-60 seconds`);
     
-    console.log('🏠 Starting sketch-to-reality generation with:', {
+    // Generate unique ID for this generation
+    const generationId = `sketch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Check and consume credit before proceeding
+    const hasCredits = await checkAndConsumeCredit(generationId, {
       roomType: selectedRoomType,
       designStyle: selectedStyle,
-      imageUrl: selectedImage.substring(0, 50) + '...'
+      sketchUrl: selectedImage,
+      slot: nextSlot,
+    });
+
+    if (!hasCredits) {
+      // Credit check failed, loading state already cleared by onError callback
+      return;
+    }
+
+    // Credit consumed successfully, proceed with generation
+    toast.loading(`✨ Transforming sketch to reality in slot ${nextSlot + 1}... This may take 30-60 seconds`);
+    
+    console.log('✨ Starting sketch to reality generation with:', {
+      generationId,
+      roomType: selectedRoomType,
+      designStyle: selectedStyle,
+      sketchUrl: selectedImage.substring(0, 50) + '...'
     });
 
     // Call tRPC mutation for image generation
@@ -174,11 +207,14 @@ export default function SketchToRealityPage() {
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
           title="Room Type"
-          description="Select the room type for your sketch"
+          description="Select the room type for your sketch transformation"
           showRoomType={true}
           showDesignStyle={false}
         />
       </div>
+      
+      {/* Credit System Modal */}
+      <UpgradeModalComponent />
       
       {/* Toast Notifications */}
       <Toaster
@@ -197,15 +233,9 @@ export default function SketchToRealityPage() {
             },
           },
           error: {
-            duration: 5000,
+            duration: 4000,
             iconTheme: {
               primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-          loading: {
-            iconTheme: {
-              primary: '#3b82f6',
               secondary: '#fff',
             },
           },

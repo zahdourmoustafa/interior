@@ -7,6 +7,7 @@ import { MainImageDisplay } from '@/components/redecorate/main-image-display';
 import { ControlSidebar } from '@/components/redecorate/control-sidebar';
 import { trpc } from '@/lib/trpc';
 import toast, { Toaster } from 'react-hot-toast';
+import { useCreditCheck } from '@/hooks/use-credit-check';
 
 export default function RedesignExteriorPage() {
   // State management
@@ -16,6 +17,19 @@ export default function RedesignExteriorPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
+
+  // Credit system integration
+  const { checkAndConsumeCredit, UpgradeModalComponent } = useCreditCheck({
+    feature: 'exterior',
+    onSuccess: () => {
+      console.log('✅ Credit consumed successfully for exterior design');
+    },
+    onError: (error) => {
+      console.error('❌ Credit error:', error);
+      setIsGenerating(false);
+      setGeneratingSlot(null);
+    }
+  });
 
   // Handlers
   const handleStyleSelect = (styleId: string) => {
@@ -72,7 +86,7 @@ export default function RedesignExteriorPage() {
   };
 
   // tRPC mutation for image generation
-  const generateMutation = trpc.images.generateRedesignExterior.useMutation({
+  const generateMutation = trpc.images.generateExterior.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.generatedImageUrl) {
         setGeneratedImages(prev => {
@@ -82,15 +96,15 @@ export default function RedesignExteriorPage() {
           }
           return newImages;
         });
-        toast.success('🎨 Your design has been generated successfully!');
-        console.log('✅ Generation completed successfully');
+        toast.success('🏠 Your exterior design has been generated successfully!');
+        console.log('✅ Exterior generation completed successfully');
       } else if (data.error) {
         toast.error(`Generation failed: ${data.error}`);
         throw new Error(data.error);
       }
     },
     onError: (error) => {
-      console.error('❌ Generation failed:', error);
+      console.error('❌ Exterior generation failed:', error);
       toast.error(`Generation failed: ${error.message}`);
     },
     onSettled: () => {
@@ -123,11 +137,30 @@ export default function RedesignExteriorPage() {
       return;
     }
 
+    // Set loading state
     setIsGenerating(true);
     setGeneratingSlot(nextSlot);
+    
+    // Generate unique ID for this generation
+    const generationId = `exterior_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Check and consume credit before proceeding
+    const hasCredits = await checkAndConsumeCredit(generationId, {
+      designStyle: selectedStyle,
+      imageUrl: selectedImage,
+      slot: nextSlot,
+    });
+
+    if (!hasCredits) {
+      // Credit check failed, loading state already cleared by onError callback
+      return;
+    }
+
+    // Credit consumed successfully, proceed with generation
     toast.loading(`🏠 Generating exterior design in slot ${nextSlot + 1}... This may take 30-60 seconds`);
     
     console.log('🏠 Starting exterior generation with:', {
+      generationId,
       designStyle: selectedStyle,
       imageUrl: selectedImage.substring(0, 50) + '...'
     });
@@ -153,7 +186,7 @@ export default function RedesignExteriorPage() {
           <MainImageDisplay
             selectedImage={selectedImage}
             generatedImages={generatedImages}
-            isGenerating={isGenerating || isUploading}
+            isGenerating={isGenerating}
             generatingSlot={generatingSlot}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
@@ -166,11 +199,14 @@ export default function RedesignExteriorPage() {
           onGenerate={handleGenerate}
           isGenerating={isGenerating || isUploading}
           title="Design Style"
-          description="Select the design style for your exterior"
+          description="Select a design style for your exterior"
           showRoomType={false}
-          showDesignStyle={true}
+          showDesignStyle={false}
         />
       </div>
+      
+      {/* Credit System Modal */}
+      <UpgradeModalComponent />
       
       {/* Toast Notifications */}
       <Toaster
@@ -189,15 +225,9 @@ export default function RedesignExteriorPage() {
             },
           },
           error: {
-            duration: 5000,
+            duration: 4000,
             iconTheme: {
               primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-          loading: {
-            iconTheme: {
-              primary: '#3b82f6',
               secondary: '#fff',
             },
           },

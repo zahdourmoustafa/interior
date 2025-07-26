@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { users, sessions, verifications, accounts } from './db/schema';
+import { onUserRegistration, onUserLogin } from './hooks/registration-hooks';
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
@@ -27,6 +28,21 @@ export const auth = betterAuth({
         required: false,
         defaultValue: false,
       },
+      creditsRemaining: {
+        type: 'number',
+        required: false,
+        defaultValue: 6,
+      },
+      creditsTotal: {
+        type: 'number',
+        required: false,
+        defaultValue: 6,
+      },
+      subscriptionStatus: {
+        type: 'string',
+        required: false,
+        defaultValue: 'free',
+      },
     },
   },
   emailAndPassword: {
@@ -38,4 +54,6 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 24 * 7, // 7 days
     },
   },
+  // Note: Better Auth hooks will be integrated in a future update
+  // For now, we'll handle credit initialization in the registration API
 });

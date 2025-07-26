@@ -2,23 +2,35 @@
 
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { MainImageDisplay } from '@/components/redecorate/main-image-display';
+import { ControlSidebar } from '@/components/redecorate/control-sidebar';
+import { trpc } from '@/lib/trpc';
 import toast, { Toaster } from 'react-hot-toast';
-import { MainVideoDisplay } from '@/components/video/main-video-display';
-import { VideoControlSidebar } from '@/components/video/video-control-sidebar';
+import { useCreditCheck } from '@/hooks/use-credit-check';
 
 export default function GenerateVideosPage() {
   // State management
-  const [selectedEffect, setSelectedEffect] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
+  const [generatedVideos, setGeneratedVideos] = useState<string[]>([]);
+  const [selectedEffect, setSelectedEffect] = useState<string | null>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
+
+  // Credit system integration
+  const { checkAndConsumeCredit, UpgradeModalComponent } = useCreditCheck({
+    feature: 'video',
+    onSuccess: () => {
+      console.log('✅ Credit consumed successfully for generate video');
+    },
+    onError: (error) => {
+      console.error('❌ Credit error:', error);
+      setIsGenerating(false);
+      setGeneratingSlot(null);
+    }
+  });
 
   // Handlers
-  const handleEffectSelect = (effectId: string) => {
-    setSelectedEffect(effectId);
-  };
-
   const handleImageUpload = async (file: File) => {
     const uploadToast = toast.loading('Uploading image...');
     
@@ -26,7 +38,7 @@ export default function GenerateVideosPage() {
       // Create object URL for immediate preview
       const previewUrl = URL.createObjectURL(file);
       setSelectedImage(previewUrl);
-      setGeneratedVideo(null); // Clear previous generations
+      setGeneratedVideos([]); // Clear previous generations
 
       // Upload to server
       const formData = new FormData();
@@ -57,17 +69,56 @@ export default function GenerateVideosPage() {
 
   const handleImageRemove = () => {
     setSelectedImage(null);
-    setGeneratedVideo(null);
+    setGeneratedVideos([]);
     toast.success('Image removed. You can upload a new image.');
   };
 
-  const handleRemoveGeneratedVideo = () => {
-    setGeneratedVideo(null);
+  const handleRemoveGeneratedVideo = (index: number) => {
+    setGeneratedVideos(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleEffectSelect = (effect: string) => {
+    setSelectedEffect(effect);
+  };
+
+  // tRPC mutation for video generation
+  const generateMutation = trpc.videos.generateVideo.useMutation({
+    onSuccess: (data) => {
+      if (data.status === 'completed' && data.generatedVideoUrl) {
+        setGeneratedVideos(prev => {
+          const newVideos = [...prev];
+          if (generatingSlot !== null) {
+            newVideos[generatingSlot] = data.generatedVideoUrl!;
+          }
+          return newVideos;
+        });
+        toast.success('🎬 Your video has been generated successfully!');
+        console.log('✅ Video generation completed successfully');
+      } else if (data.error) {
+        toast.error(`Generation failed: ${data.error}`);
+        throw new Error(data.error);
+      }
+    },
+    onError: (error) => {
+      console.error('❌ Video generation failed:', error);
+      toast.error(`Generation failed: ${error.message}`);
+    },
+    onSettled: () => {
+      setIsGenerating(false);
+      setGeneratingSlot(null);
+    }
+  });
+
   const handleGenerate = async () => {
+    // Validation with user-friendly messages
     if (!selectedImage) {
       toast.error('Please upload an image first');
+      return;
+    }
+    
+    // Check if image is still uploading (blob URL means upload not complete)
+    if (selectedImage.startsWith('blob:')) {
+      toast.error('Please wait for the image upload to complete before generating');
       return;
     }
     
@@ -76,90 +127,76 @@ export default function GenerateVideosPage() {
       return;
     }
 
-    setIsGenerating(true);
-    toast.loading(`📹 Generating video... This may take 30-60 seconds`);
-    
-    try {
-      // Create FormData to send the image file
-      const formData = new FormData();
-      // We need to fetch the image from the URL to send it to the API
-      const imageResponse = await fetch(selectedImage);
-      const imageBlob = await imageResponse.blob();
-      formData.append('image', imageBlob);
-      formData.append('effect', selectedEffect);
-
-      // Start video generation
-      const apiResponse = await fetch('/api/video/generate', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await apiResponse.json();
-
-      if (!apiResponse.ok) {
-        throw new Error(data.error || 'Failed to start video generation');
-      }
-
-      const generationId = data.generationId;
-
-      // Start polling for status
-      const interval = setInterval(async () => {
-        try {
-            const response = await fetch(`/api/video/status/${generationId}`);
-            const statusData = await response.json();
-
-            if (statusData.status === 'completed' && statusData.videoUrl) {
-              setGeneratedVideo(statusData.videoUrl);
-              setIsGenerating(false);
-              toast.success('Video generated successfully!');
-              clearInterval(interval);
-            } else if (statusData.status === 'failed') {
-              setIsGenerating(false);
-              toast.error('Video generation failed');
-              clearInterval(interval);
-            }
-        } catch(error) {
-            console.error('Polling error:', error);
-            setIsGenerating(false);
-            toast.error('Video generation failed');
-            clearInterval(interval);
-        }
-      }, 5000);
-
-      toast.success('Video generation started!');
-
-    } catch (error) {
-      console.error('Generation error:', error);
-      setIsGenerating(false);
-      toast.error(error instanceof Error ? error.message : 'Failed to generate video');
+    const nextSlot = generatedVideos.length;
+    if (nextSlot >= 4) {
+      toast.error("All video slots are full. Please remove one to generate a new video.");
+      return;
     }
+
+    // Set loading state
+    setIsGenerating(true);
+    setGeneratingSlot(nextSlot);
+    
+    // Generate unique ID for this generation
+    const generationId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Check and consume credit before proceeding
+    const hasCredits = await checkAndConsumeCredit(generationId, {
+      imageUrl: selectedImage,
+      videoEffect: selectedEffect,
+      slot: nextSlot,
+    });
+
+    if (!hasCredits) {
+      // Credit check failed, loading state already cleared by onError callback
+      return;
+    }
+
+    // Credit consumed successfully, proceed with generation
+    toast.loading(`🎬 Generating video in slot ${nextSlot + 1}... This may take 60-120 seconds`);
+    
+    console.log('🎬 Starting video generation with:', {
+      generationId,
+      imageUrl: selectedImage.substring(0, 50) + '...',
+      videoEffect: selectedEffect
+    });
+
+    // Call tRPC mutation for video generation
+    generateMutation.mutate({
+      originalImageUrl: selectedImage,
+      effect: selectedEffect as 'rotate180' | 'zoomIn' | 'zoomOut',
+    });
   };
-
-
 
   return (
     <DashboardLayout useContainer={false}>
       <div className="flex h-[calc(100vh-4rem)] bg-gray-50">
-        {/* Center - Main Video Display */}
+        {/* Center - Main Image Display */}
         <div className="flex-1 p-6">
-          <MainVideoDisplay
+          <MainImageDisplay
             selectedImage={selectedImage}
-            generatedVideo={generatedVideo}
+            generatedImages={generatedVideos}
             isGenerating={isGenerating}
+            generatingSlot={generatingSlot}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
-            onRemoveGeneratedVideo={handleRemoveGeneratedVideo}
+            onRemoveGeneratedImage={handleRemoveGeneratedVideo}
           />
         </div>
         
         {/* Right Sidebar - Controls */}
-        <VideoControlSidebar
+        <ControlSidebar
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
-          selectedEffect={selectedEffect}
-          onEffectSelect={handleEffectSelect}
+          title="Video Effects"
+          description="Select an effect for your video generation"
+          showRoomType={false}
+          showDesignStyle={false}
         />
       </div>
+      
+      {/* Credit System Modal */}
+      <UpgradeModalComponent />
       
       {/* Toast Notifications */}
       <Toaster
@@ -178,15 +215,9 @@ export default function GenerateVideosPage() {
             },
           },
           error: {
-            duration: 5000,
+            duration: 4000,
             iconTheme: {
               primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-          loading: {
-            iconTheme: {
-              primary: '#3b82f6',
               secondary: '#fff',
             },
           },

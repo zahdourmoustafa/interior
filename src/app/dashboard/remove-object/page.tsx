@@ -1,237 +1,230 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { ImageEditor } from "@/components/redecorate/image-editor";
-import { ControlSidebar } from "@/components/redecorate/control-sidebar";
-import { Toaster } from "@/components/ui/sonner";
-import { trpc } from "@/lib/trpc";
-import { ImageUpload } from "@/components/redecorate/image-upload";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
-
-import { BrushControls } from "@/components/redecorate/brush-controls";
+import { useState } from 'react';
+import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { MainImageDisplay } from '@/components/redecorate/main-image-display';
+import { ControlSidebar } from '@/components/redecorate/control-sidebar';
+import { trpc } from '@/lib/trpc';
+import toast, { Toaster } from 'react-hot-toast';
+import { useCreditCheck } from '@/hooks/use-credit-check';
 
 export default function RemoveObjectPage() {
-  const [originalImage, setOriginalImage] = useState<string | null>(null);
-  const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [mask, setMask] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  // State management
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [selectedObjects, setSelectedObjects] = useState<string[]>([]);
+
   const [isGenerating, setIsGenerating] = useState(false);
-  const [loadingToastId, setLoadingToastId] = useState<string | null>(null);
-  const [hasDrawn, setHasDrawn] = useState(false);
-  const [brushSize, setBrushSize] = useState(20);
-  const [brushOpacity, setBrushOpacity] = useState(0.5);
+  const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
 
-  const [isDrawingMode, setIsDrawingMode] = useState(true);
+  // Credit system integration
+  const { checkAndConsumeCredit, UpgradeModalComponent } = useCreditCheck({
+    feature: 'remove',
+    onSuccess: () => {
+      console.log('✅ Credit consumed successfully for remove object');
+    },
+    onError: (error) => {
+      console.error('❌ Credit error:', error);
+      setIsGenerating(false);
+      setGeneratingSlot(null);
+    }
+  });
 
-  const generateMutation = trpc.images.removeObject.useMutation({
+  // Handlers
+  const handleImageUpload = async (file: File) => {
+    const uploadToast = toast.loading('Uploading image...');
+    
+    try {
+      // Create object URL for immediate preview
+      const previewUrl = URL.createObjectURL(file);
+      setSelectedImage(previewUrl);
+      setGeneratedImages([]); // Clear previous generations
+      setSelectedObjects([]); // Clear selected objects
+
+      // Upload to server
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      
+      // Update with server URL
+      setSelectedImage(result.imageUrl);
+      toast.success('Image uploaded successfully!', { id: uploadToast });
+      console.log('✅ Image uploaded successfully:', result.imageUrl);
+
+    } catch (error) {
+      console.error('❌ Upload failed:', error);
+      toast.error('Failed to upload image. Please try again.', { id: uploadToast });
+      // Keep the preview URL if upload fails
+    }
+  };
+
+  const handleImageRemove = () => {
+    setSelectedImage(null);
+    setGeneratedImages([]);
+    setSelectedObjects([]);
+    toast.success('Image removed. You can upload a new image.');
+  };
+
+  const handleRemoveGeneratedImage = (index: number) => {
+    setGeneratedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleObjectSelection = (objects: string[]) => {
+    setSelectedObjects(objects);
+  };
+
+  // tRPC mutation for image generation
+  const generateMutation = trpc.images.generateRemoveObject.useMutation({
     onSuccess: (data) => {
-      if (data.generatedImageUrl) {
-        setCurrentImage(data.generatedImageUrl);
-        if (loadingToastId) {
-          toast.dismiss(loadingToastId);
-        }
-        toast.success("🎨 Object successfully removed from the image!");
+      if (data.status === 'completed' && data.generatedImageUrl) {
+        setGeneratedImages(prev => {
+          const newImages = [...prev];
+          if (generatingSlot !== null) {
+            newImages[generatingSlot] = data.generatedImageUrl!;
+          }
+          return newImages;
+        });
+        toast.success('🗑️ Objects have been removed successfully!');
+        console.log('✅ Remove object generation completed successfully');
+      } else if (data.error) {
+        toast.error(`Generation failed: ${data.error}`);
+        throw new Error(data.error);
       }
     },
     onError: (error) => {
-      console.error("❌ Generation failed:", error);
-      if (loadingToastId) {
-        toast.dismiss(loadingToastId);
-      }
-      toast.error("Failed to remove object. Please try again.");
+      console.error('❌ Remove object generation failed:', error);
+      toast.error(`Generation failed: ${error.message}`);
     },
     onSettled: () => {
       setIsGenerating(false);
-      setLoadingToastId(null);
-      setHasDrawn(false);
-      setMask(null);
-    },
+      setGeneratingSlot(null);
+    }
   });
 
-  const handleImageUpload = (url: string) => {
-    if (url) {
-      // Check if it's a blob URL (temporary) or a permanent URL
-      if (url.startsWith("blob:")) {
-        setIsUploading(true);
-        // Just set the original image for preview, but don't enable generation yet
-        setOriginalImage(url);
-        setCurrentImage(url);
-      } else {
-        // It's a permanent URL, ready for generation
-        setOriginalImage(url);
-        setCurrentImage(url);
-        setIsUploading(false);
-        toast.success(
-          "Image uploaded successfully. Now use the brush to select objects to remove."
-        );
-      }
-    } else {
-      setOriginalImage(null);
-      setCurrentImage(null);
-      setMask(null);
-      setHasDrawn(false);
-      setIsUploading(false);
-    }
-  };
-
-  
-
-  const handleResetToOriginal = () => {
-    if (originalImage) {
-      setCurrentImage(originalImage);
-      setMask(null);
-      setHasDrawn(false);
-      toast.success("Image has been reset to the original.");
-    }
-  };
-
-  const handleMaskChange = (maskData: string) => {
-    setMask(maskData);
-    if (maskData && !hasDrawn) {
-      setHasDrawn(true);
-    }
-  };
-
-  const [prompt, setPrompt] = useState("");
-
   const handleGenerate = async () => {
-    if (!currentImage) {
-      toast.error("Please upload an image first.");
+    // Validation with user-friendly messages
+    if (!selectedImage) {
+      toast.error('Please upload an image first');
+      return;
+    }
+    
+    // Check if image is still uploading (blob URL means upload not complete)
+    if (selectedImage.startsWith('blob:')) {
+      toast.error('Please wait for the image upload to complete before generating');
+      return;
+    }
+    
+    if (selectedObjects.length === 0) {
+      toast.error('Please select objects to remove');
       return;
     }
 
-    if (isUploading || currentImage.startsWith("blob:")) {
-      toast.error("Please wait for the image to finish uploading.");
+    const nextSlot = generatedImages.length;
+    if (nextSlot >= 4) {
+      toast.error("All image slots are full. Please remove one to generate a new design.");
       return;
     }
 
-    if (!mask && !prompt) {
-      toast.error(
-        "Please brush over the object you want to remove, or enter a prompt."
-      );
-      return;
-    }
-
+    // Set loading state
     setIsGenerating(true);
-    const loadingToast = toast.loading(
-      "Removing object... This may take 30-60 seconds"
-    );
-    setLoadingToastId(loadingToast as string);
+    setGeneratingSlot(nextSlot);
+    
+    // Generate unique ID for this generation
+    const generationId = `remove_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Check and consume credit before proceeding
+    const hasCredits = await checkAndConsumeCredit(generationId, {
+      imageUrl: selectedImage,
+      objectsToRemove: selectedObjects,
+      slot: nextSlot,
+    });
 
-    try {
-      await generateMutation.mutateAsync({
-        imageUrl: currentImage,
-        mask: mask || undefined,
-        prompt: prompt,
-      });
-    } catch (error) {
-      console.error("Generation error:", error);
-      if (loadingToastId) {
-        toast.dismiss(loadingToastId);
-      }
-      toast.error("Failed to remove object. Please try again.");
-      setIsGenerating(false);
+    if (!hasCredits) {
+      // Credit check failed, loading state already cleared by onError callback
+      return;
     }
-  };
 
-  const handleUploadBegin = () => {
-    setIsUploading(true);
-    const id = toast.loading("Uploading image... Please wait");
-    setLoadingToastId(id as string);
-  };
+    // Credit consumed successfully, proceed with generation
+    toast.loading(`🗑️ Removing objects in slot ${nextSlot + 1}... This may take 30-60 seconds`);
+    
+    console.log('🗑️ Starting remove object generation with:', {
+      generationId,
+      imageUrl: selectedImage.substring(0, 50) + '...',
+      objectsToRemove: selectedObjects
+    });
 
-  const handleUploadComplete = (url: string) => {
-    if (loadingToastId) {
-      toast.dismiss(loadingToastId);
-    }
-    setOriginalImage(url);
-    setCurrentImage(url);
-    setIsUploading(false);
-    toast.success(
-      "Image uploaded successfully. Now use the brush to select objects to remove."
-    );
-  };
-
-  const clearMask = () => {
-    // This function will be passed to the ImageEditor, which will handle the actual clearing.
-    // We just need to reset the mask state here.
-    setMask(null);
-    setHasDrawn(false);
+    // Call tRPC mutation for image generation
+    generateMutation.mutate({
+      originalImageUrl: selectedImage,
+      objectsToRemove: selectedObjects,
+    });
   };
 
   return (
     <DashboardLayout useContainer={false}>
       <div className="flex h-[calc(100vh-4rem)] bg-gray-50">
-        <div className="flex-1 p-6 flex flex-col">
-          {!currentImage && (
-            <div className="mb-6">
-              <Alert className="bg-blue-50 border-blue-200">
-                <InfoIcon className="h-4 w-4 text-blue-500" />
-                <AlertTitle>Object Removal Tool</AlertTitle>
-                <AlertDescription>
-                  Upload an image, then use the brush to select objects you
-                  want to remove. Our AI will intelligently remove the selected
-                  objects and fill in the background.
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-
-          {currentImage ? (
-            <div className="flex-1 flex items-center justify-center">
-              <ImageEditor
-                image={currentImage}
-                onMaskChange={handleMaskChange}
-                brushSize={brushSize}
-                brushOpacity={brushOpacity}
-                clearMask={clearMask}
-                isDrawingMode={isDrawingMode}
-              />
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col">
-              <ImageUpload
-                onImageSelect={handleImageUpload}
-                onUploadBegin={handleUploadBegin}
-                onUploadComplete={handleUploadComplete}
-              />
-            </div>
-          )}
+        {/* Center - Main Image Display */}
+        <div className="flex-1 p-6">
+          <MainImageDisplay
+            selectedImage={selectedImage}
+            generatedImages={generatedImages}
+            isGenerating={isGenerating}
+            generatingSlot={generatingSlot}
+            onImageUpload={handleImageUpload}
+            onImageRemove={handleImageRemove}
+            onRemoveGeneratedImage={handleRemoveGeneratedImage}
+          />
         </div>
+        
+        {/* Right Sidebar - Controls */}
         <ControlSidebar
-          title="Remove Object"
-          description="Use the brush to select objects you want to remove from the image. Adjust the brush size and opacity as needed."
-          isGenerating={isGenerating || isUploading}
           onGenerate={handleGenerate}
+          isGenerating={isGenerating}
+          title="Remove Objects"
+          description="Select objects to remove from your image"
           showRoomType={false}
           showDesignStyle={false}
-          prompt={prompt}
-          onPromptChange={setPrompt}
-          promptPlaceholder="e.g., remove the person in the background"
-          onReset={handleResetToOriginal}
-          isResettable={!!originalImage && currentImage !== originalImage}
-          generateButtonText="Remove Object"
-          generateButtonDisabled={
-            (!hasDrawn && !prompt) ||
-            isUploading ||
-            currentImage?.startsWith("blob:")
-          }
-          isDrawingMode={isDrawingMode}
-          onDrawingModeChange={setIsDrawingMode}
-        >
-          <BrushControls
-            brushSize={brushSize}
-            setBrushSize={setBrushSize}
-            brushOpacity={brushOpacity}
-            setBrushOpacity={setBrushOpacity}
-            clearMask={clearMask}
-          />
-        </ControlSidebar>
+        />
       </div>
-      <Toaster />
+      
+      {/* Credit System Modal */}
+      <UpgradeModalComponent />
+      
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </DashboardLayout>
   );
 }

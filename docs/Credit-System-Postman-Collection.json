@@ -1,0 +1,144 @@
+{
+  "info": {
+    "name": "ArchiCassoAI Credit System",
+    "description": "API endpoints for testing the credit system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "session_token",
+      "value": "your-session-token-here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get User Credits",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "better-auth.session_token={{session_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/user/credits",
+          "host": ["{{base_url}}"],
+          "path": ["api", "user", "credits"]
+        }
+      }
+    },
+    {
+      "name": "Consume Credit - Interior",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "better-auth.session_token={{session_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"feature\": \"interior\",\n  \"generation_id\": \"test_gen_123\",\n  \"metadata\": {\n    \"style\": \"modern\",\n    \"room_type\": \"living_room\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/user/credits/consume",
+          "host": ["{{base_url}}"],
+          "path": ["api", "user", "credits", "consume"]
+        }
+      }
+    },
+    {
+      "name": "Consume Credit - Exterior",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "better-auth.session_token={{session_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"feature\": \"exterior\",\n  \"generation_id\": \"test_ext_456\",\n  \"metadata\": {\n    \"style\": \"contemporary\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/user/credits/consume",
+          "host": ["{{base_url}}"],
+          "path": ["api", "user", "credits", "consume"]
+        }
+      }
+    },
+    {
+      "name": "Get Credit History",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "better-auth.session_token={{session_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/user/credits/history?limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "user", "credits", "history"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Grant Credits",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "better-auth.session_token={{session_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"your-user-id-here\",\n  \"amount\": 5,\n  \"reason\": \"testing_grant\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/admin/credits/grant",
+          "host": ["{{base_url}}"],
+          "path": ["api", "admin", "credits", "grant"]
+        }
+      }
+    }
+  ]
+}
