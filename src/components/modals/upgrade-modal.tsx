@@ -84,7 +84,7 @@ export function UpgradeModal({
 
   if (!isOpen) return null;
 
-  const featureName = feature ? featureNames[feature] : 'this feature';
+  const featureName = feature ? (featureNames as Record<string, string>)[feature] || 'this feature' : 'this feature';
 
   const handleUpgrade = async () => {
     setIsProcessing(true);

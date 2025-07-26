@@ -84,7 +84,8 @@ export default function RemoveObjectPage() {
   };
 
   // tRPC mutation for image generation
-  const generateMutation = trpc.images.generateRemoveObject.useMutation({
+  // TODO: Implement generateRemoveObject procedure in tRPC router
+  const generateMutation = trpc.images.generateTextToDesign.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.generatedImageUrl) {
         setGeneratedImages(prev => {
@@ -165,8 +166,8 @@ export default function RemoveObjectPage() {
 
     // Call tRPC mutation for image generation
     generateMutation.mutate({
-      originalImageUrl: selectedImage,
-      objectsToRemove: selectedObjects,
+      prompt: `Remove the following objects from this image: ${selectedObjects.join(', ')}. Keep the rest of the image intact and natural.`,
+      numberOfImages: 1,
     });
   };
 

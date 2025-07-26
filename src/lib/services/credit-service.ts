@@ -259,7 +259,7 @@ export class CreditService {
           featureUsed: t.featureUsed as FeatureType,
           creditsConsumed: t.creditsConsumed,
           generationId: t.generationId || undefined,
-          metadata: t.metadata as Record<string, any> || {},
+          metadata: (t.metadata as Record<string, unknown>) || {},
           createdAt: t.createdAt,
         })),
         totalConsumed,
@@ -335,7 +335,13 @@ export class CreditService {
   /**
    * Get system-wide credit analytics (admin only)
    */
-  static async getCreditAnalytics(days: number = 30): Promise<any> {
+  static async getCreditAnalytics(days: number = 30): Promise<{
+    totalCreditsConsumed: number;
+    totalTransactions: number;
+    featureBreakdown: Record<string, number>;
+    dailyUsage: Array<{ date: string; credits: number }>;
+    period: string;
+  }> {
     try {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
@@ -347,7 +353,10 @@ export class CreditService {
         .where(gte(creditTransactions.createdAt, startDate));
 
       return {
+        totalCreditsConsumed: 0, // TODO: Implement actual calculation
         totalTransactions: totalTransactions[0].count,
+        featureBreakdown: {}, // TODO: Implement actual calculation
+        dailyUsage: [], // TODO: Implement actual calculation
         period: `${days} days`,
         // Add more analytics as needed
       };

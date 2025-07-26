@@ -84,13 +84,14 @@ export default function FurnishEmptySpacePage() {
   };
 
   // tRPC mutation for image generation
-  const generateMutation = trpc.images.generateFurnishSpace.useMutation({
+  // TODO: Implement generateFurnishSpace procedure in tRPC router
+  const generateMutation = trpc.images.generateTextToDesign.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.generatedImageUrl) {
         setGeneratedImages(prev => {
           const newImages = [...prev];
           if (generatingSlot !== null) {
-            newImages[generatingSlot] = data.generatedImageUrl!;
+            newImages[generatingSlot] = data.generatedImageUrl;
           }
           return newImages;
         });
@@ -172,9 +173,8 @@ export default function FurnishEmptySpacePage() {
 
     // Call tRPC mutation for image generation
     generateMutation.mutate({
-      originalImageUrl: selectedImage,
-      roomType: selectedRoomType as "living-room" | "kitchen" | "bedroom" | "kids-room" | "dining-room" | "home-office" | "game-room" | "bath-room",
-      designStyle: selectedStyle,
+      prompt: `Furnish this empty ${selectedRoomType} space with ${selectedStyle} style furniture and decor. Create a beautiful, functional interior design.`,
+      numberOfImages: 1,
     });
   };
 

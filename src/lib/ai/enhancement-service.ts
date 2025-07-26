@@ -50,11 +50,12 @@ export class EnhancementService {
           // If successful, break out of retry loop
           break;
           
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorObj = error as { status?: number; message?: string };
           // Check if it's a rate limit error
-          if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('throttled')) {
+          if (errorObj.status === 429 || errorObj.message?.includes('rate limit') || errorObj.message?.includes('throttled')) {
             retryCount++;
-            const retryAfter = error.response?.headers?.['retry-after'] || 5; // Default to 5 seconds
+            const retryAfter = (errorObj as { response?: { headers?: { 'retry-after'?: number } } }).response?.headers?.['retry-after'] || 5; // Default to 5 seconds
             const waitTime = Math.max(retryAfter * 1000, 5000); // Wait at least 5 seconds
             
             console.log(`⏳ Rate limited. Retry ${retryCount}/${maxRetries} after ${waitTime/1000}s...`);
@@ -141,8 +142,9 @@ export class EnhancementService {
     while (retryCount < maxRetries) {
       try {
         return await this.enhance(imageUrl);
-      } catch (error: any) {
-        if (error.status === 429 || error.message?.includes('rate limit')) {
+      } catch (error: unknown) {
+        const errorObj = error as { status?: number; message?: string };
+        if (errorObj.status === 429 || errorObj.message?.includes('rate limit')) {
           retryCount++;
           // Exponential backoff: 2^retry * 1000ms + random jitter
           const baseDelay = Math.pow(2, retryCount) * 1000;

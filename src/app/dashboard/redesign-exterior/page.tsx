@@ -86,7 +86,7 @@ export default function RedesignExteriorPage() {
   };
 
   // tRPC mutation for image generation
-  const generateMutation = trpc.images.generateExterior.useMutation({
+  const generateMutation = trpc.images.generateRedesignExterior.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.generatedImageUrl) {
         setGeneratedImages(prev => {

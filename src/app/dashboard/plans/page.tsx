@@ -259,12 +259,12 @@ export default function PlansPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                   className={`relative bg-white rounded-2xl shadow-lg border-2 p-8 cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-105 ${
-                    plan.popular ? 'border-purple-500 ring-2 ring-purple-500 ring-opacity-20' : 'border-gray-200'
+                    (plan as { popular?: boolean }).popular ? 'border-purple-500 ring-2 ring-purple-500 ring-opacity-20' : 'border-gray-200'
                   }`}
                   onClick={() => setIsUpgradeModalOpen(true)}
                 >
                   {/* Popular badge */}
-                  {plan.popular && (
+                  {(plan as { popular?: boolean }).popular && (
                     <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
                       <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
                         <Crown className="w-2.5 h-2.5" />
@@ -430,7 +430,7 @@ export default function PlansPage() {
                 </div>
               </div>
               
-              {currentPlan?.popular && (
+              {(currentPlan as { popular?: boolean })?.popular && (
                 <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                   Most Popular
                 </div>

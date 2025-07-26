@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useCredits } from '@/providers/credit-provider';
 import Link from 'next/link';
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const { refreshCredits } = useCredits();
   const [isLoading, setIsLoading] = useState(true);
@@ -140,5 +140,13 @@ export default function CheckoutSuccessPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

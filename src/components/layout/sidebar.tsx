@@ -347,9 +347,9 @@ export function Sidebar({ className }: SidebarProps) {
             "relative flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 flex-shrink-0",
             isActive 
               ? `bg-gradient-to-br ${item.color} text-white shadow-lg` 
-              : "bg-gray-100 text-gray-600"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           )}>
-            <item.icon className="h-5 w-5 flex-shrink-0" />
+            <item.icon className="h-5 w-5 flex-shrink-0" style={{ display: 'block' }} />
           </div>
           
           {/* Text - only show when expanded */}
@@ -430,7 +430,7 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
         
         {/* Main Navigation */}
-        <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 overflow-y-auto hide-scrollbar">
           <ul className="space-y-2">
             {navigation.map((item, index) => (
               <NavItem key={item.name} item={item} index={index} />
@@ -572,7 +572,7 @@ export function Sidebar({ className }: SidebarProps) {
                 stiffness: 300,
                 damping: 30
               }}
-              className="fixed left-0 top-0 bottom-0 w-80 bg-white/95 backdrop-blur-xl shadow-2xl z-50 md:hidden overflow-y-auto"
+              className="fixed left-0 top-0 bottom-0 w-80 bg-white/95 backdrop-blur-xl shadow-2xl z-50 md:hidden overflow-y-auto hide-scrollbar"
             >
               {/* Mobile Header */}
               <div className="p-6 border-b border-gray-200/50">

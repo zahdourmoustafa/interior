@@ -82,7 +82,7 @@ export async function consumeCreditAfterGeneration(
   userId: string,
   feature: FeatureType,
   generationId?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   try {
     await CreditService.consumeCredit(userId, {

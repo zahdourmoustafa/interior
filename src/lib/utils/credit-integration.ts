@@ -14,7 +14,7 @@ export class CreditIntegration {
     request: NextRequest,
     feature: FeatureType,
     generationId?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<{
     success: boolean;
     userId?: string;
@@ -161,13 +161,13 @@ export class CreditIntegration {
  */
 export function withCreditCheck(feature: FeatureType) {
   return function (
-    target: any,
+    target: unknown,
     propertyName: string,
     descriptor: PropertyDescriptor
   ) {
     const method = descriptor.value;
 
-    descriptor.value = async function (request: NextRequest, ...args: any[]) {
+    descriptor.value = async function (request: NextRequest, ...args: unknown[]) {
       // Check and consume credit
       const creditResult = await CreditIntegration.checkAndConsumeCredit(
         request,

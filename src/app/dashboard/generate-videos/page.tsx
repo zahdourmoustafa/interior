@@ -82,21 +82,21 @@ export default function GenerateVideosPage() {
   };
 
   // tRPC mutation for video generation
-  const generateMutation = trpc.videos.generateVideo.useMutation({
+  const generateMutation = trpc.images.generateVideo.useMutation({
     onSuccess: (data) => {
-      if (data.status === 'completed' && data.generatedVideoUrl) {
+      if (data.status === 'completed' && data.videoUrl) {
         setGeneratedVideos(prev => {
           const newVideos = [...prev];
           if (generatingSlot !== null) {
-            newVideos[generatingSlot] = data.generatedVideoUrl!;
+            newVideos[generatingSlot] = data.videoUrl;
           }
           return newVideos;
         });
         toast.success('🎬 Your video has been generated successfully!');
         console.log('✅ Video generation completed successfully');
-      } else if (data.error) {
-        toast.error(`Generation failed: ${data.error}`);
-        throw new Error(data.error);
+      } else {
+        toast.error('Video generation failed');
+        console.error('❌ Video generation failed');
       }
     },
     onError: (error) => {
@@ -163,7 +163,7 @@ export default function GenerateVideosPage() {
 
     // Call tRPC mutation for video generation
     generateMutation.mutate({
-      originalImageUrl: selectedImage,
+      imageUrl: selectedImage,
       effect: selectedEffect as 'rotate180' | 'zoomIn' | 'zoomOut',
     });
   };
