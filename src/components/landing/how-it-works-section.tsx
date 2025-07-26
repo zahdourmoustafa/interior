@@ -8,7 +8,7 @@ const data = [
     title: "1. Upload Your Space",
     content:
       "Simply upload photos of your room to our secure platform. We support various image formats and automatically analyze your space dimensions and current layout.",
-    image: "/modern.webp",
+    image: "/before2.jpeg",
     icon: <Upload className="w-6 h-6 text-primary" />,
   },
   {
@@ -24,7 +24,7 @@ const data = [
     title: "3. Get Your Design",
     content:
       "Receive stunning, photorealistic designs and 3D visualizations of your transformed space. Use these designs to make confident decorating decisions.",
-    image: "/vintage.webp",
+    image: "/after2.png",
     icon: <Sparkles className="w-6 h-6 text-primary" />,
   },
 ];

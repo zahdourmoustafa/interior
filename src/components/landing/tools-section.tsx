@@ -167,7 +167,7 @@ export default function ToolsSection() {
     <Section
       title="AI Tools"
       subtitle="AI render tools to level up your interior design workflow"
-      description="12+ tools, 40+ styles to render or redesign in seconds"
+      description="25+ styles to render or redesign in seconds"
       className="bg-gray-50 dark:bg-gray-900"
     >
       {/* Hero CTA Buttons */}
@@ -178,12 +178,7 @@ export default function ToolsSection() {
         transition={{ duration: 0.6, delay: 0.2 }}
         viewport={{ once: true }}
       >
-        <Button size="lg" className="bg-[#3b82f6] hover:bg-[#2563eb] text-white">
-          Explore AI tools
-        </Button>
-        <Button size="lg" variant="outline" className="border-[#3b82f6] text-[#3b82f6] hover:bg-[#3b82f6] hover:text-white">
-          Explore Gallery
-        </Button>
+       
       </motion.div>
 
       {/* Hero Image */}

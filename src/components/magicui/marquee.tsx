@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 
 interface MarqueeProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -5,28 +7,34 @@ interface MarqueeProps extends React.HTMLAttributes<HTMLDivElement> {
   pauseOnHover?: boolean;
   vertical?: boolean;
   repeat?: number;
+  speed?: number;
 }
 
 export default function Marquee({
   className,
-  reverse,
+  reverse = false,
   pauseOnHover = false,
   children,
   vertical = false,
-  repeat = 4,
+  repeat = 2,
+  speed = 40,
   ...props
 }: MarqueeProps) {
   return (
     <div
       {...props}
       className={cn(
-        "group flex overflow-hidden p-2 [--duration:40s] [--gap:1rem] [gap:var(--gap)]",
+        "group flex overflow-hidden p-2 [gap:var(--gap)]",
         {
           "flex-row": !vertical,
           "flex-col": vertical,
         },
         className,
       )}
+      style={{
+        "--duration": `${speed}s`,
+        "--gap": "1rem",
+      } as React.CSSProperties}
     >
       {Array(repeat)
         .fill(0)
@@ -34,10 +42,11 @@ export default function Marquee({
           <div
             key={i}
             className={cn("flex shrink-0 justify-around [gap:var(--gap)]", {
-              "animate-marquee flex-row": !vertical,
-              "animate-marquee-vertical flex-col": vertical,
+              "animate-marquee flex-row": !vertical && !reverse,
+              "animate-marquee flex-row [animation-direction:reverse]": !vertical && reverse,
+              "animate-marquee-vertical flex-col": vertical && !reverse,
+              "animate-marquee-vertical flex-col [animation-direction:reverse]": vertical && reverse,
               "group-hover:[animation-play-state:paused]": pauseOnHover,
-              "[animation-direction:reverse]": reverse,
             })}
           >
             {children}

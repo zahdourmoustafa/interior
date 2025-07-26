@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-import HeroVideoDialog from "@/components/magicui/hero-video";
+import { MarqueeImages } from "@/components/marquee-images";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -107,14 +107,7 @@ function HeroCTA() {
           Start Rendering. It&apos;s Free
         </Link>
       </motion.div>
-      <motion.p
-        className="mt-6 text-base text-muted-foreground font-medium"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.0, duration: 0.8 }}
-      >
-        Free trial available. No credit card required.
-      </motion.p>
+     
     </>
   );
 }
@@ -127,13 +120,9 @@ function HeroImage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 1.2, duration: 1, ease }}
     >
-      <HeroVideoDialog
-        animationStyle="from-center"
-        videoSrc="https://www.youtube.com/embed/demo-interior-ai"
-        thumbnailSrc="/modern.webp"
-        thumbnailAlt="ArchiCassoAI Demo"
-        className="border rounded-lg shadow-lg max-w-screen-lg mt-20"
-      />
+      <div className="w-full max-w-screen-xl mt-20">
+        <MarqueeImages />
+      </div>
     </motion.div>
   );
 }

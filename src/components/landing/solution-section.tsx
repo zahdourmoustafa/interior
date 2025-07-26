@@ -16,7 +16,7 @@ const features = [
     content: (
       <>
         <Safari
-          src={`/modern.webp`}
+          src={`/after1.png`}
           url="https://archicassoai.com"
           className="-mb-32 mt-4 max-h-64 w-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-y-[-10px] transition-all duration-300"
         />
@@ -56,7 +56,7 @@ const features = [
           width={800}
         />
         <Safari
-          src={`/vintage.webp`}
+          src={`/after2.png`}
           url="https://archicassoai.com"
           className="-mb-48 ml-12 mt-16 h-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-x-[-10px] transition-all duration-300"
         />
@@ -73,7 +73,7 @@ const features = [
       <>
         <Ripple className="absolute -bottom-full" />
         <Safari
-          src={`/tropical.webp`}
+          src={`/p5.webp`}
           url="https://archicassoai.com"
           className="-mb-32 mt-4 max-h-64 w-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-y-[-10px] transition-all duration-300"
         />
@@ -86,7 +86,7 @@ export default function SolutionSection() {
   return (
     <Section
       title="Solution"
-      subtitle="Empower Your Space with AI Interior Design"
+      subtitle="Empower Your Space with ArchiCassoAI"
       description="Generic design tools won't suffice. Our platform is purpose-built to provide exceptional AI-driven interior design solutions for your unique space and style."
       className="bg-neutral-100 dark:bg-neutral-900"
     >
