@@ -49,24 +49,24 @@ export default function Footer() {
         </div>
 
         <div className="border-t mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-4">
+            <span className="text-sm text-muted-foreground">
               © 2024 {siteConfig.name}. All rights reserved.
-            </p>
-            <div className="flex space-x-6 text-sm text-muted-foreground">
-              <Link href="#" className="hover:text-foreground transition-colors">
-                Privacy Policy
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Created by{" "}
+              <Link 
+                href="https://x.com/moustafa0x" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 transition-colors font-medium"
+              >
+                Moustafa
               </Link>
-              <Link href="#" className="hover:text-foreground transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="#" className="hover:text-foreground transition-colors">
-                Cookie Policy
-              </Link>
-            </div>
+            </span>
           </div>
         </div>
       </div>
     </footer>
   );
-} 
+}
