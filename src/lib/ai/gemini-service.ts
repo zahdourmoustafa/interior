@@ -266,7 +266,87 @@ export class GeminiService {
     }
   }
 
-  static async generateSketchToReality(
+  static async generateExteriorDesign(
+    input: GenerateImageInput
+  ): Promise<GenerateImageOutput> {
+    try {
+      console.log("🏡 Starting exterior design generation with Gemini:", {
+        designStyle: input.designStyle,
+        imageUrl: input.imageUrl.substring(0, 50) + "...",
+      });
+
+      const ai = getGoogleAI();
+
+      const imagePart = await urlToGenerativePart(
+        input.imageUrl,
+        getMimeTypeFromUrl(input.imageUrl)
+      );
+
+      const model = ai.getGenerativeModel({
+        model: this.IMAGE_GENERATION_MODEL,
+        generationConfig: {
+          temperature: 0.4,
+          responseModalities: ["TEXT", "IMAGE"],
+        } as ExtendedGenerationConfig,
+      });
+
+      const contents = [
+        {
+          role: "user",
+          parts: [
+            imagePart,
+            {
+              text: this.generateExteriorPrompt(input.designStyle!),
+            },
+          ],
+        },
+      ];
+
+      const response = await model.generateContentStream({
+        contents,
+      });
+
+      for await (const chunk of response.stream) {
+        if (
+          !chunk.candidates ||
+          !chunk.candidates[0].content ||
+          !chunk.candidates[0].content.parts
+        ) {
+          continue;
+        }
+        if (chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
+          const inlineData = chunk.candidates[0].content.parts[0].inlineData;
+          const imageBytes = Buffer.from(inlineData.data || "", "base64");
+          const blob = await put(
+            `gemini-exterior-${Date.now()}.jpg`,
+            imageBytes,
+            {
+              access: "public",
+              token: process.env.BLOB_READ_WRITE_TOKEN!,
+            }
+          );
+
+          console.log("✅ Gemini exterior generation completed:", blob.url);
+
+          return {
+            jobId: `gemini_exterior_${Date.now()}`,
+            imageUrl: blob.url,
+            status: "completed",
+          };
+        }
+      }
+
+      throw new Error("No exterior images generated from Gemini");
+    } catch (error) {
+      console.error("❌ Gemini exterior generation failed:", error);
+      return {
+        jobId: `gemini_exterior_failed_${Date.now()}`,
+        status: "failed",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }  static async generateSketchToReality(
     input: GenerateImageInput
   ): Promise<GenerateImageOutput> {
     try {
@@ -739,7 +819,69 @@ export class GeminiService {
     return `Your task is to act as a photorealistic rendering engine. You will receive a line-art sketch of a room and your job is to transform it into a photorealistic, 8K image. Your output must be a high-quality, professional photograph of a real-world interior.\n\n**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL SKETCH'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input sketch.**\n\nWith the camera position locked, you will then render the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:\n- Textures and materials (e.g., wood, metal, fabric)\n- Colors and color palette\n- Lighting (e.g., ambient, task, natural)\n- Decorative objects (e.g., pillows, vases, art)\n\nDo not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
   }
 
-  static async uploadImageToBlob(
+  private static generateExteriorPrompt(designStyle: string): string {
+    const exteriorStylePrompts = {
+      scandinavian:
+        "a Scandinavian architectural style featuring light wood siding (pine or cedar), large energy-efficient windows with white or natural wood frames, a simple gabled roof with metal or tile roofing, neutral color palette (whites, light grays, natural wood tones), minimal landscaping with native plants, and clean geometric lines",
+      christmas:
+        "a festive Christmas exterior design with warm holiday lighting, evergreen garlands around windows and doors, a snow-dusted roof, traditional red and green accents, wreaths, outdoor Christmas decorations, cozy warm lighting from windows, and a welcoming holiday atmosphere",
+      japanese:
+        "a Japanese architectural style with natural wood elements (cedar or cypress), clean horizontal lines, a traditional tile roof (kawara), shoji-inspired window designs, zen garden landscaping with rocks and minimal plants, natural stone pathways, and a harmonious blend with nature",
+      eclectic:
+        "an eclectic architectural design mixing different materials like brick, wood, metal, and stone, varied window styles and sizes, unique color combinations, artistic architectural details, creative landscaping with diverse plants, and an overall artistic and unconventional appearance",
+      minimalist:
+        "a minimalist architectural design with clean geometric forms, monochromatic color scheme (whites, grays, blacks), large unadorned windows, smooth surfaces (concrete, stucco, or metal siding), minimal landscaping with structured plants, and emphasis on simple, uncluttered lines",
+      futuristic:
+        "a futuristic architectural design with sleek metallic surfaces, large glass panels, LED accent lighting, geometric angular forms, high-tech materials like composite panels, smart home features visible from exterior, minimal landscaping with modern hardscaping, and innovative architectural elements",
+      bohemian:
+        "a bohemian architectural style with warm earthy materials (adobe, stucco, natural stone), vibrant accent colors, varied textures, lush landscaping with diverse plants and flowers, artistic details like mosaic tiles or murals, curved architectural elements, and a free-spirited, artistic appearance",
+      parisian:
+        "a Parisian architectural style with classic limestone or brick facade, wrought-iron balconies and window details, mansard or slate roof, elegant proportions, formal landscaping, sophisticated neutral colors (cream, gray, soft pastels), and timeless French architectural elements",
+    };
+
+    const exteriorMaterials = {
+      scandinavian: "light wood siding, white trim, metal roofing",
+      christmas: "traditional materials with festive decorations, warm lighting",
+      japanese: "natural cedar wood, stone, traditional tiles",
+      eclectic: "mixed materials - brick, wood, metal, stone",
+      minimalist: "concrete, stucco, metal panels, glass",
+      futuristic: "composite materials, metal cladding, smart glass",
+      bohemian: "adobe, stucco, natural stone, colorful accents",
+      parisian: "limestone, brick, wrought iron, slate",
+    };
+
+    const styleDesc = exteriorStylePrompts[designStyle as keyof typeof exteriorStylePrompts] || 
+      `${designStyle} architectural style with appropriate exterior materials and design elements`;
+    
+    const materialDesc = exteriorMaterials[designStyle as keyof typeof exteriorMaterials] || 
+      "high-quality exterior materials suitable for the architectural style";
+
+    return `Your task is to act as a professional architectural visualization engine. You will receive an image of a building exterior and transform it according to a specific architectural design style.
+
+**NON-NEGOTIABLE DIRECTIVE: PRESERVE THE ORIGINAL BUILDING'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or overall building structure. The output image's geometry, proportions, and framing must be IDENTICAL to the input image.**
+
+Transform this building exterior to showcase ${styleDesc}.
+
+**SPECIFIC EXTERIOR ELEMENTS TO MODIFY:**
+- **Wall Materials & Textures**: Apply ${materialDesc} with authentic textures and weathering
+- **Windows & Doors**: Update frames, styles, and hardware to match the architectural style
+- **Roofing**: Transform roof materials, colors, and details appropriate to the style
+- **Color Palette**: Apply the style-specific color scheme to all exterior surfaces
+- **Architectural Details**: Add or modify trim, moldings, and decorative elements
+- **Landscaping**: Update plants, hardscaping, and outdoor elements to complement the style
+- **Lighting**: Ensure natural lighting enhances the architectural features
+
+**CRITICAL REQUIREMENTS:**
+- Maintain the exact same building proportions, height, and overall structure
+- Preserve the original camera angle and perspective
+- Apply realistic material textures (wood grain, stone texture, metal finishes, etc.)
+- Ensure proper architectural proportions and details
+- Create photorealistic results with professional architectural photography quality
+- Use natural lighting that enhances the building's features
+- Include appropriate landscaping and context for the architectural style
+
+The final output must be an 8K, ultra-realistic architectural photograph with exceptional detail, perfect lighting, and authentic material representation that makes the building appear as if it was originally designed in this architectural style.`;
+  }  static async uploadImageToBlob(
     file: Buffer,
     filename: string
   ): Promise<string> {
