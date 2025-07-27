@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Credit System Integration Test
  * Run this to verify the credit system is working correctly

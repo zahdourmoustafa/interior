@@ -23,7 +23,7 @@ export function CreditCounter({
   loading = false, 
   onUpgradeClick 
 }: CreditCounterProps) {
-  const [isHovering, setIsHovering] = useState(false);
+  const [, setIsHovering] = useState(false);
 
   // Show loading state
   if (loading || !credits) {

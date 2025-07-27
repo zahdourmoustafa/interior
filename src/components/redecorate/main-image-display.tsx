@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Download, Maximize2, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, Download, Maximize2, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';

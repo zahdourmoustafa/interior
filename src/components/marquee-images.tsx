@@ -1,4 +1,5 @@
 "use client";
+import Image from 'next/image';
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -50,10 +51,13 @@ const ImageCard = ({
         "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
       )}
     >
-      <img 
+      <Image 
         className="h-full w-full object-cover transition-transform hover:scale-105" 
         src={src} 
         alt={alt}
+        width={300}
+        height={200}
+        priority
       />
     </div>
   );

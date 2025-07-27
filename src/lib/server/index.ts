@@ -395,12 +395,18 @@ export const appRouter = router({
             imageUrl: input.imageUrl,
             prompt: input.prompt,
           });
-
-          if (result.status === "completed" && result.imageUrl && ctx.user) {
+          // Enhance the generated image if successful
+          let finalImageUrl = result.imageUrl;
+          if (result.status === "completed" && result.imageUrl) {
+            console.log("✨ Enhancing furnished space image...");
+            finalImageUrl = await EnhancementService.enhance(result.imageUrl);
+            console.log("✅ Enhancement completed for furnished space");
+          }
+          if (result.status === "completed" && finalImageUrl && ctx.user) {
             await db.insert(images).values({
               userId: ctx.user.id,
               originalImageUrl: input.imageUrl,
-              generatedImageUrl: result.imageUrl,
+              generatedImageUrl: finalImageUrl,
               roomType: "furnish-empty-space",
               style: "custom",
               aiPromptUsed: input.prompt,
@@ -409,7 +415,7 @@ export const appRouter = router({
           }
 
           return {
-            generatedImageUrl: result.imageUrl,
+            generatedImageUrl: finalImageUrl,
             status: result.status,
           };
         } catch (error) {
@@ -439,12 +445,18 @@ export const appRouter = router({
             mask: input.mask,
             prompt: input.prompt,
           });
-
-          if (result.status === "completed" && result.imageUrl && ctx.user) {
+          // Enhance the generated image if successful
+          let finalImageUrl = result.imageUrl;
+          if (result.status === "completed" && result.imageUrl) {
+            console.log("✨ Enhancing object removal image...");
+            finalImageUrl = await EnhancementService.enhance(result.imageUrl);
+            console.log("✅ Enhancement completed for object removal");
+          }
+          if (result.status === "completed" && finalImageUrl && ctx.user) {
             await db.insert(images).values({
               userId: ctx.user.id,
               originalImageUrl: input.imageUrl,
-              generatedImageUrl: result.imageUrl,
+              generatedImageUrl: finalImageUrl,
               roomType: "remove-object",
               style: "custom",
               aiPromptUsed: input.prompt,
@@ -453,7 +465,7 @@ export const appRouter = router({
           }
 
           return {
-            generatedImageUrl: result.imageUrl,
+            generatedImageUrl: finalImageUrl,
             status: result.status,
           };
         } catch (error) {
@@ -493,50 +505,102 @@ export const appRouter = router({
       .input(
         z.object({
           imageUrl: z.string(),
-          effect: z.enum(["rotate180", "zoomIn", "zoomOut"]),
+          effect: z.enum([
+            "zoomIn", 
+            "zoomOut", 
+            "flythrough", 
+            "rotateLeft", 
+            "rotateRight", 
+            "panLeft", 
+            "panRight", 
+            "tiltUp", 
+            "tiltDown"
+          ]),
         })
       )
       .mutation(async ({ input }) => {
         // Luma AI system prompt based on selected effect
+        try {
         let systemPrompt = "";
 
         switch (input.effect) {
-          case "rotate180":
-            systemPrompt =
-              "Create a smooth 180-degree rotation video of this interior space. The camera should rotate smoothly around the room, showing the space from all angles. Focus on creating a cinematic, immersive experience that showcases the room's layout and design.";
-            break;
           case "zoomIn":
             systemPrompt =
-              "Create a smooth zoom-in animation video of this interior space. Start with a wide view and gradually zoom in to focus on specific details or areas of interest. The transition should be smooth and cinematic, creating a sense of depth and intimacy.";
+              "Create a smooth zoom-in animation video of this interior space. Start with a wide view and gradually zoom in to focus on specific details or areas of interest. The transition should be smooth and cinematic, creating a sense of depth and intimacy with a 5-second duration.";
             break;
           case "zoomOut":
             systemPrompt =
-              "Create a smooth zoom-out animation video of this interior space. Start with a close-up view and gradually zoom out to reveal the full room. The transition should be smooth and cinematic, providing a comprehensive view of the entire space.";
+              "Create a smooth zoom-out animation video of this interior space. Start with a close-up view and gradually zoom out to reveal the full room. The transition should be smooth and cinematic, providing a comprehensive view of the entire space with a 5-second duration.";
+            break;
+          case "flythrough":
+            systemPrompt =
+              "Create a cinematic flythrough video of this interior space. The camera should move smoothly through the room as if flying, showcasing different areas and perspectives. Create an immersive journey that highlights the room's layout, design elements, and spatial relationships with a 5-second duration.";
+            break;
+          case "rotateLeft":
+            systemPrompt =
+              "Create a smooth left rotation video of this interior space. The camera should rotate counterclockwise around the room's center, providing a 360-degree view of the space. The rotation should be steady and cinematic, showcasing all angles of the room with a 5-second duration.";
+            break;
+          case "rotateRight":
+            systemPrompt =
+              "Create a smooth right rotation video of this interior space. The camera should rotate clockwise around the room's center, providing a 360-degree view of the space. The rotation should be steady and cinematic, showcasing all angles of the room with a 5-second duration.";
+            break;
+          case "panLeft":
+            systemPrompt =
+              "Create a smooth left panning video of this interior space. The camera should pan horizontally from right to left, maintaining the same height and distance while revealing different parts of the room. The movement should be steady and cinematic with a 5-second duration.";
+            break;
+          case "panRight":
+            systemPrompt =
+              "Create a smooth right panning video of this interior space. The camera should pan horizontally from left to right, maintaining the same height and distance while revealing different parts of the room. The movement should be steady and cinematic with a 5-second duration.";
+            break;
+          case "tiltUp":
+            systemPrompt =
+              "Create a smooth upward tilt video of this interior space. The camera should tilt vertically from looking down to looking up, revealing the ceiling, lighting fixtures, and upper elements of the room. The movement should be smooth and cinematic with a 5-second duration.";
+            break;
+          case "tiltDown":
+            systemPrompt =
+              "Create a smooth downward tilt video of this interior space. The camera should tilt vertically from looking up to looking down, revealing the floor, furniture placement, and lower elements of the room. The movement should be smooth and cinematic with a 5-second duration.";
             break;
         }
+        // Call Luma AI API for video generation
+        console.log("🎬 Calling Luma AI with prompt:", systemPrompt);
+        
+        const { LumaService } = await import("../ai/luma-service");
+        const result = await LumaService.generateVideo({
+          imageUrl: input.imageUrl,
+          prompt: systemPrompt,
+        });
 
-        // Placeholder for Luma AI API call
-        console.log("Luma AI Prompt:", systemPrompt);
-        console.log("Image URL:", input.imageUrl);
-        console.log("Effect:", input.effect);
+        console.log("🎬 Luma AI result:", result);
 
         return {
-          jobId: `luma-${Date.now()}`,
-          videoUrl: `/api/video/${input.effect}-${Date.now()}.mp4`,
-          status: "processing",
+          jobId: result.jobId,
+          videoUrl: result.videoUrl,
+          status: result.status,
           prompt: systemPrompt,
+          error: result.error,
         };
-      }),
-  }),
-
-  favorites: router({
-    getAll: authedProcedure.query(async () => {
-      return await db
-        .select()
-        .from(favorites)
-        .leftJoin(images, eq(favorites.imageId, images.id));
+      } catch (error) {
+        console.error("❌ Video generation failed:", error);
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : "Video generation failed"
+        );
+      }
     }),
 
+    addToFavorites: authedProcedure
+
+      .input(z.object({ imageId: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) {
+          throw new Error("User not authenticated");
+        }
+        return await db.insert(favorites).values({
+          userId: ctx.user.id,
+          imageId: input.imageId,
+        });
+      }),
     add: authedProcedure
       .input(z.object({ imageId: z.string() }))
       .mutation(async ({ input, ctx }) => {

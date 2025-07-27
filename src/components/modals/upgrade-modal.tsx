@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Zap, Crown, Check, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FeatureType, CREDIT_CONSTANTS } from '@/lib/types/credit-types';
+import { FeatureType } from '@/lib/types/credit-types';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -74,7 +74,6 @@ const plans = [
 export function UpgradeModal({ 
   isOpen, 
   onClose, 
-  onUpgrade, 
   feature,
   remainingCredits = 0 
 }: UpgradeModalProps) {

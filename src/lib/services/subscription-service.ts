@@ -1,8 +1,6 @@
 import { db } from '../db';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { creem } from '../creem';
-import { CreditService } from './credit-service';
 import { onSubscriptionChange } from '../hooks/registration-hooks';
 import { SubscriptionStatus } from '../types/credit-types';
 

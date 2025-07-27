@@ -2,20 +2,17 @@
 
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { DesignStyleSidebar } from '@/components/redecorate/design-style-sidebar';
 import { MainImageDisplay } from '@/components/redecorate/main-image-display';
-import { ControlSidebar } from '@/components/redecorate/control-sidebar';
+import { FurnishControlSidebar } from '@/components/redecorate/furnish-control-sidebar';
 import { trpc } from '@/lib/trpc';
 import toast, { Toaster } from 'react-hot-toast';
 import { useCreditCheck } from '@/hooks/use-credit-check';
 
 export default function FurnishEmptySpacePage() {
   // State management
-  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-  const [selectedRoomType, setSelectedRoomType] = useState<string | null>(null);
-
+  const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
 
@@ -32,12 +29,8 @@ export default function FurnishEmptySpacePage() {
     }
   });
 
-  // Handlers
-  const handleStyleSelect = (styleId: string) => {
-    setSelectedStyle(styleId);
-  };
-
   const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
     const uploadToast = toast.loading('Uploading empty space image...');
     
     try {
@@ -70,6 +63,8 @@ export default function FurnishEmptySpacePage() {
       console.error('❌ Upload failed:', error);
       toast.error('Failed to upload image. Please try again.', { id: uploadToast });
       // Keep the preview URL if upload fails
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -83,23 +78,22 @@ export default function FurnishEmptySpacePage() {
     setGeneratedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // tRPC mutation for image generation
-  // TODO: Implement generateFurnishSpace procedure in tRPC router
-  const generateMutation = trpc.images.generateTextToDesign.useMutation({
+  // tRPC mutation for furnishing empty space
+  const furnishMutation = trpc.images.furnishEmptySpace.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.generatedImageUrl) {
         setGeneratedImages(prev => {
           const newImages = [...prev];
           if (generatingSlot !== null) {
-            newImages[generatingSlot] = data.generatedImageUrl;
+            newImages[generatingSlot] = data.generatedImageUrl!;
           }
           return newImages;
         });
         toast.success('🪑 Your empty space has been furnished successfully!');
         console.log('✅ Furnish empty space generation completed successfully');
-      } else if (data.error) {
-        toast.error(`Generation failed: ${data.error}`);
-        throw new Error(data.error);
+      } else if (data.status === 'failed') {
+        toast.error('Generation failed');
+        throw new Error('Generation failed');
       }
     },
     onError: (error) => {
@@ -112,7 +106,7 @@ export default function FurnishEmptySpacePage() {
     }
   });
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (prompt: string) => {
     // Validation with user-friendly messages
     if (!selectedImage) {
       toast.error('Please upload an empty space image first');
@@ -125,13 +119,8 @@ export default function FurnishEmptySpacePage() {
       return;
     }
     
-    if (!selectedRoomType) {
-      toast.error('Please select a room type');
-      return;
-    }
-    
-    if (!selectedStyle) {
-      toast.error('Please select a furnishing style');
+    if (!prompt.trim()) {
+      toast.error('Please describe what furniture you want to add');
       return;
     }
 
@@ -150,8 +139,7 @@ export default function FurnishEmptySpacePage() {
     
     // Check and consume credit before proceeding
     const hasCredits = await checkAndConsumeCredit(generationId, {
-      roomType: selectedRoomType,
-      furnishingStyle: selectedStyle,
+      prompt: prompt,
       imageUrl: selectedImage,
       slot: nextSlot,
     });
@@ -166,27 +154,20 @@ export default function FurnishEmptySpacePage() {
     
     console.log('🪑 Starting furnish empty space generation with:', {
       generationId,
-      roomType: selectedRoomType,
-      furnishingStyle: selectedStyle,
+      prompt: prompt,
       imageUrl: selectedImage.substring(0, 50) + '...'
     });
 
-    // Call tRPC mutation for image generation
-    generateMutation.mutate({
-      prompt: `Furnish this empty ${selectedRoomType} space with ${selectedStyle} style furniture and decor. Create a beautiful, functional interior design.`,
-      numberOfImages: 1,
+    // Call tRPC mutation for furnishing
+    furnishMutation.mutate({
+      imageUrl: selectedImage,
+      prompt: prompt,
     });
   };
 
   return (
     <DashboardLayout useContainer={false}>
       <div className="flex h-[calc(100vh-4rem)] bg-gray-50">
-        {/* Left Sidebar - Design Styles */}
-        <DesignStyleSidebar
-          selectedStyle={selectedStyle}
-          onStyleSelect={handleStyleSelect}
-        />
-        
         {/* Center - Main Image Display */}
         <div className="flex-1 p-6">
           <MainImageDisplay
@@ -200,16 +181,10 @@ export default function FurnishEmptySpacePage() {
           />
         </div>
         
-        {/* Right Sidebar - Controls */}
-        <ControlSidebar
-          selectedRoomType={selectedRoomType}
-          onRoomTypeSelect={setSelectedRoomType}
+        {/* Right Sidebar - Furnish Controls */}
+        <FurnishControlSidebar
           onGenerate={handleGenerate}
-          isGenerating={isGenerating}
-          title="Room Type"
-          description="Select the room type for furnishing"
-          showRoomType={true}
-          showDesignStyle={false}
+          isGenerating={isGenerating || isUploading}
         />
       </div>
       

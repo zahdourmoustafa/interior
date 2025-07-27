@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
   Home, 
-  Image, 
+  Image as ImageIcon, 
   Video, 
   Scissors, 
   Brush, 
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Icons } from "@/components/icons";
 import { authClient } from '@/lib/auth-client';
 import { toast } from 'sonner';
@@ -33,7 +34,7 @@ const navigation = [
   { name: 'Exterior', href: '/dashboard/redesign-exterior', icon: Home, color: 'from-green-500 to-green-600' },
   { name: 'Text to Design', href: '/dashboard/text-to-design', icon: Type, color: 'from-cyan-500 to-cyan-600' },
   { name: 'Sketch', href: '/dashboard/sketch-to-reality', icon: Brush, color: 'from-orange-500 to-orange-600' },
-  { name: 'Furnish Empty Space', href: '/dashboard/furnish-empty-space', icon: Image, color: 'from-pink-500 to-pink-600' },
+  { name: 'Furnish Empty Space', href: '/dashboard/furnish-empty-space', icon: ImageIcon, color: 'from-pink-500 to-pink-600' },
   { name: 'Remove Object', href: '/dashboard/remove-object', icon: Scissors, color: 'from-red-500 to-red-600' },
   { name: 'Generate Video', href: '/dashboard/generate-videos', icon: Video, color: 'from-indigo-500 to-indigo-600' },
 ];
@@ -144,9 +145,11 @@ const UserProfileSidebar = ({ isExpanded }: { isExpanded: boolean }) => {
         <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 p-0.5 shadow-lg">
           <div className="w-full h-full rounded-xl bg-white flex items-center justify-center overflow-hidden">
             {user.image ? (
-              <img
+              <Image
                 src={user.image}
                 alt={user.name || 'User'}
+                width={40}
+                height={40}
                 className="w-full h-full object-cover rounded-xl"
               />
             ) : (
@@ -188,7 +191,6 @@ const UserProfileSidebar = ({ isExpanded }: { isExpanded: boolean }) => {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [isHovering, setIsHovering] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     // Use Better Auth to handle logout
-    const response = await auth.api.signOut({
+    await auth.api.signOut({
       headers: request.headers,
     });
 

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { MainImageDisplay } from '@/components/redecorate/main-image-display';
-import { ControlSidebar } from '@/components/redecorate/control-sidebar';
+import { SingleVideoDisplay } from '@/components/video/single-video-display';
+import { VideoEffectsControlSidebar } from '@/components/video/video-effects-control-sidebar';
 import { trpc } from '@/lib/trpc';
 import toast, { Toaster } from 'react-hot-toast';
 import { useCreditCheck } from '@/hooks/use-credit-check';
@@ -11,11 +11,9 @@ import { useCreditCheck } from '@/hooks/use-credit-check';
 export default function GenerateVideosPage() {
   // State management
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [generatedVideos, setGeneratedVideos] = useState<string[]>([]);
+  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [selectedEffect, setSelectedEffect] = useState<string | null>(null);
-
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingSlot, setGeneratingSlot] = useState<number | null>(null);
 
   // Credit system integration
   const { checkAndConsumeCredit, UpgradeModalComponent } = useCreditCheck({
@@ -26,7 +24,6 @@ export default function GenerateVideosPage() {
     onError: (error) => {
       console.error('❌ Credit error:', error);
       setIsGenerating(false);
-      setGeneratingSlot(null);
     }
   });
 
@@ -38,7 +35,7 @@ export default function GenerateVideosPage() {
       // Create object URL for immediate preview
       const previewUrl = URL.createObjectURL(file);
       setSelectedImage(previewUrl);
-      setGeneratedVideos([]); // Clear previous generations
+      setGeneratedVideo(null); // Clear previous video
 
       // Upload to server
       const formData = new FormData();
@@ -69,12 +66,9 @@ export default function GenerateVideosPage() {
 
   const handleImageRemove = () => {
     setSelectedImage(null);
-    setGeneratedVideos([]);
+    setGeneratedVideo(null);
+    setSelectedEffect(null);
     toast.success('Image removed. You can upload a new image.');
-  };
-
-  const handleRemoveGeneratedVideo = (index: number) => {
-    setGeneratedVideos(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleEffectSelect = (effect: string) => {
@@ -85,15 +79,12 @@ export default function GenerateVideosPage() {
   const generateMutation = trpc.images.generateVideo.useMutation({
     onSuccess: (data) => {
       if (data.status === 'completed' && data.videoUrl) {
-        setGeneratedVideos(prev => {
-          const newVideos = [...prev];
-          if (generatingSlot !== null) {
-            newVideos[generatingSlot] = data.videoUrl;
-          }
-          return newVideos;
-        });
+        setGeneratedVideo(data.videoUrl);
         toast.success('🎬 Your video has been generated successfully!');
         console.log('✅ Video generation completed successfully');
+      } else if (data.status === 'processing') {
+        toast.success('🎬 Video generation started! Processing...');
+        console.log('🎬 Video generation in progress');
       } else {
         toast.error('Video generation failed');
         console.error('❌ Video generation failed');
@@ -105,11 +96,10 @@ export default function GenerateVideosPage() {
     },
     onSettled: () => {
       setIsGenerating(false);
-      setGeneratingSlot(null);
     }
   });
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (effect: string) => {
     // Validation with user-friendly messages
     if (!selectedImage) {
       toast.error('Please upload an image first');
@@ -122,20 +112,13 @@ export default function GenerateVideosPage() {
       return;
     }
     
-    if (!selectedEffect) {
+    if (!effect) {
       toast.error('Please select a video effect');
-      return;
-    }
-
-    const nextSlot = generatedVideos.length;
-    if (nextSlot >= 4) {
-      toast.error("All video slots are full. Please remove one to generate a new video.");
       return;
     }
 
     // Set loading state
     setIsGenerating(true);
-    setGeneratingSlot(nextSlot);
     
     // Generate unique ID for this generation
     const generationId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -143,8 +126,7 @@ export default function GenerateVideosPage() {
     // Check and consume credit before proceeding
     const hasCredits = await checkAndConsumeCredit(generationId, {
       imageUrl: selectedImage,
-      videoEffect: selectedEffect,
-      slot: nextSlot,
+      videoEffect: effect,
     });
 
     if (!hasCredits) {
@@ -153,45 +135,41 @@ export default function GenerateVideosPage() {
     }
 
     // Credit consumed successfully, proceed with generation
-    toast.loading(`🎬 Generating video in slot ${nextSlot + 1}... This may take 60-120 seconds`);
+    toast.loading(`🎬 Generating ${effect} video... This may take 60-120 seconds`);
     
     console.log('🎬 Starting video generation with:', {
       generationId,
       imageUrl: selectedImage.substring(0, 50) + '...',
-      videoEffect: selectedEffect
+      videoEffect: effect
     });
 
     // Call tRPC mutation for video generation
     generateMutation.mutate({
       imageUrl: selectedImage,
-      effect: selectedEffect as 'rotate180' | 'zoomIn' | 'zoomOut',
+      effect: effect as 'zoomIn' | 'zoomOut' | 'flythrough' | 'rotateLeft' | 'rotateRight' | 'panLeft' | 'panRight' | 'tiltUp' | 'tiltDown',
     });
   };
 
   return (
     <DashboardLayout useContainer={false}>
       <div className="flex h-[calc(100vh-4rem)] bg-gray-50">
-        {/* Center - Main Image Display */}
+        {/* Center - Single Video Display */}
         <div className="flex-1 p-6">
-          <MainImageDisplay
+          <SingleVideoDisplay
             selectedImage={selectedImage}
-            generatedImages={generatedVideos}
+            generatedVideo={generatedVideo}
             isGenerating={isGenerating}
-            generatingSlot={generatingSlot}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
-            onRemoveGeneratedImage={handleRemoveGeneratedVideo}
           />
         </div>
         
-        {/* Right Sidebar - Controls */}
-        <ControlSidebar
+        {/* Right Sidebar - Video Effects Controls */}
+        <VideoEffectsControlSidebar
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
-          title="Video Effects"
-          description="Select an effect for your video generation"
-          showRoomType={false}
-          showDesignStyle={false}
+          selectedEffect={selectedEffect}
+          onEffectSelect={handleEffectSelect}
         />
       </div>
       

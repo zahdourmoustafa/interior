@@ -763,7 +763,7 @@ export class GeminiService {
 
     const roomDesc =
       roomPrompts[roomType as keyof typeof roomPrompts] || "an interior space";
-    const styleDesc =
+    const styleDesc = 
       stylePrompts[designStyle as keyof typeof stylePrompts] || "a modern style";
 
     return `Your task is to act as a photorealistic rendering engine. You will receive an image of a room and your job is to re-texture it according to a new design style.\n\n**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL IMAGE'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input image.**\n\nWith the camera position locked, you will then modify the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:\n- Textures and materials (e.g., wood, metal, fabric)\n- Colors and color palette\n- Lighting (e.g., ambient, task, natural)\n- Decorative objects (e.g., pillows, vases, art)\n\nDo not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
@@ -813,31 +813,13 @@ export class GeminiService {
 
     const roomDesc =
       roomPrompts[roomType as keyof typeof roomPrompts] || "an interior space";
-    const styleDesc =
+    const styleDesc = 
       stylePrompts[designStyle as keyof typeof stylePrompts] || "a modern style";
 
     return `Your task is to act as a photorealistic rendering engine. You will receive a line-art sketch of a room and your job is to transform it into a photorealistic, 8K image. Your output must be a high-quality, professional photograph of a real-world interior.\n\n**NON-NEGOTIABLE DIRECTIVE: The single most important rule is to PRESERVE THE ORIGINAL SKETCH'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or position. The output image's geometry, layout, and framing must be IDENTICAL to the input sketch.**\n\nWith the camera position locked, you will then render the following surface-level elements of the ${roomDesc} to match the new style of ${styleDesc}:\n- Textures and materials (e.g., wood, metal, fabric)\n- Colors and color palette\n- Lighting (e.g., ambient, task, natural)\n- Decorative objects (e.g., pillows, vases, art)\n\nDo not add, remove, or change the position of any furniture or architectural elements (walls, windows, doors). The final output must be an 8K, ultra-realistic photograph with exceptional detail and perfect lighting.`;
   }
 
   private static generateExteriorPrompt(designStyle: string): string {
-    const exteriorStylePrompts = {
-      scandinavian:
-        "a Scandinavian architectural style featuring light wood siding (pine or cedar), large energy-efficient windows with white or natural wood frames, a simple gabled roof with metal or tile roofing, neutral color palette (whites, light grays, natural wood tones), minimal landscaping with native plants, and clean geometric lines",
-      christmas:
-        "a festive Christmas exterior design with warm holiday lighting, evergreen garlands around windows and doors, a snow-dusted roof, traditional red and green accents, wreaths, outdoor Christmas decorations, cozy warm lighting from windows, and a welcoming holiday atmosphere",
-      japanese:
-        "a Japanese architectural style with natural wood elements (cedar or cypress), clean horizontal lines, a traditional tile roof (kawara), shoji-inspired window designs, zen garden landscaping with rocks and minimal plants, natural stone pathways, and a harmonious blend with nature",
-      eclectic:
-        "an eclectic architectural design mixing different materials like brick, wood, metal, and stone, varied window styles and sizes, unique color combinations, artistic architectural details, creative landscaping with diverse plants, and an overall artistic and unconventional appearance",
-      minimalist:
-        "a minimalist architectural design with clean geometric forms, monochromatic color scheme (whites, grays, blacks), large unadorned windows, smooth surfaces (concrete, stucco, or metal siding), minimal landscaping with structured plants, and emphasis on simple, uncluttered lines",
-      futuristic:
-        "a futuristic architectural design with sleek metallic surfaces, large glass panels, LED accent lighting, geometric angular forms, high-tech materials like composite panels, smart home features visible from exterior, minimal landscaping with modern hardscaping, and innovative architectural elements",
-      bohemian:
-        "a bohemian architectural style with warm earthy materials (adobe, stucco, natural stone), vibrant accent colors, varied textures, lush landscaping with diverse plants and flowers, artistic details like mosaic tiles or murals, curved architectural elements, and a free-spirited, artistic appearance",
-      parisian:
-        "a Parisian architectural style with classic limestone or brick facade, wrought-iron balconies and window details, mansard or slate roof, elegant proportions, formal landscaping, sophisticated neutral colors (cream, gray, soft pastels), and timeless French architectural elements",
-    };
 
     const exteriorMaterials = {
       scandinavian: "light wood siding, white trim, metal roofing",
@@ -850,37 +832,44 @@ export class GeminiService {
       parisian: "limestone, brick, wrought iron, slate",
     };
 
-    const styleDesc = exteriorStylePrompts[designStyle as keyof typeof exteriorStylePrompts] || 
-      `${designStyle} architectural style with appropriate exterior materials and design elements`;
     
     const materialDesc = exteriorMaterials[designStyle as keyof typeof exteriorMaterials] || 
       "high-quality exterior materials suitable for the architectural style";
 
-    return `Your task is to act as a professional architectural visualization engine. You will receive an image of a building exterior and transform it according to a specific architectural design style.
+    return `CRITICAL INSTRUCTION: You are an ARCHITECTURAL MATERIAL TRANSFORMATION ENGINE. Your ONLY job is to change the materials, colors, and surface treatments of the EXACT building shown in the input image.
 
-**NON-NEGOTIABLE DIRECTIVE: PRESERVE THE ORIGINAL BUILDING'S COMPOSITION. You are forbidden from altering the camera angle, perspective, zoom level, or overall building structure. The output image's geometry, proportions, and framing must be IDENTICAL to the input image.**
+**ABSOLUTE CONSTRAINTS - VIOLATION WILL RESULT IN FAILURE:**
+1. **IDENTICAL GEOMETRY**: The building's shape, size, proportions, and structural form must remain 100% unchanged
+2. **IDENTICAL COMPOSITION**: Same camera angle, perspective, framing, and viewpoint as the original
+3. **IDENTICAL ARCHITECTURE**: Same roof shape, window positions, door locations, and building outline
+4. **IDENTICAL LANDSCAPING LAYOUT**: Same trees, plants, and hardscape positions (only change materials/colors)
 
-Transform this building exterior to showcase ${styleDesc}.
+**YOUR TRANSFORMATION SCOPE - MATERIALS & SURFACES ONLY:**
+- **Wall Surfaces**: Replace with ${materialDesc} while keeping exact same wall shapes and dimensions
+- **Roof Materials**: Change roof material/color to match ${designStyle} style but keep identical roof shape and angles  
+- **Window Frames**: Update frame materials/colors only - same size, position, and quantity of windows
+- **Door Materials**: Change door material/color only - same door size and position
+- **Trim & Details**: Apply ${designStyle} appropriate trim materials while maintaining building's original architectural lines
+- **Color Palette**: Apply ${designStyle} color scheme to all surfaces
+- **Surface Textures**: Add realistic material textures (wood grain, stone, brick, etc.)
 
-**SPECIFIC EXTERIOR ELEMENTS TO MODIFY:**
-- **Wall Materials & Textures**: Apply ${materialDesc} with authentic textures and weathering
-- **Windows & Doors**: Update frames, styles, and hardware to match the architectural style
-- **Roofing**: Transform roof materials, colors, and details appropriate to the style
-- **Color Palette**: Apply the style-specific color scheme to all exterior surfaces
-- **Architectural Details**: Add or modify trim, moldings, and decorative elements
-- **Landscaping**: Update plants, hardscaping, and outdoor elements to complement the style
-- **Lighting**: Ensure natural lighting enhances the architectural features
+**WHAT YOU CANNOT CHANGE:**
+- Building height, width, or depth
+- Roof shape or roofline
+- Window sizes, positions, or quantities  
+- Door sizes or positions
+- Overall building footprint or silhouette
+- Camera angle or perspective
+- Basic landscaping layout
 
-**CRITICAL REQUIREMENTS:**
-- Maintain the exact same building proportions, height, and overall structure
-- Preserve the original camera angle and perspective
-- Apply realistic material textures (wood grain, stone texture, metal finishes, etc.)
-- Ensure proper architectural proportions and details
-- Create photorealistic results with professional architectural photography quality
-- Use natural lighting that enhances the building's features
-- Include appropriate landscaping and context for the architectural style
+**TECHNICAL EXECUTION:**
+- Think of this as "re-skinning" the building with new materials
+- The building should look like it was originally built with ${designStyle} materials
+- Maintain all original architectural proportions and structural elements
+- Apply photorealistic material textures appropriate to ${designStyle}
+- Use natural lighting that enhances the new materials
 
-The final output must be an 8K, ultra-realistic architectural photograph with exceptional detail, perfect lighting, and authentic material representation that makes the building appear as if it was originally designed in this architectural style.`;
+REMEMBER: You are NOT creating a new building. You are applying a new "material skin" to the EXACT existing building structure. The result should be the same building that appears to have been originally constructed using ${designStyle} materials and design principles.`;
   }  static async uploadImageToBlob(
     file: Buffer,
     filename: string

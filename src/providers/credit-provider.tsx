@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { FeatureType } from '@/lib/types/credit-types';
-import { SubscriptionService } from '@/lib/services/subscription-service';
 import { toast } from 'sonner';
 
 interface UserCredits {

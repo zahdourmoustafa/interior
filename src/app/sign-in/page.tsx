@@ -2,11 +2,13 @@
 
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 
-export default function SignInPage() {
+function SignInContent() {
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -22,16 +24,19 @@ export default function SignInPage() {
 
     setIsLoading(true);
     try {
+      // Get redirect parameter or default to dashboard
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
       // Check if signIn.social exists
       if (authClient.signIn?.social) {
         await authClient.signIn.social({
           provider: 'google',
-          callbackURL: '/dashboard',
+          callbackURL: redirectTo,
         });
       } else {
         console.warn('Social sign-in not available, using fallback');
-        // Use the correct better-auth endpoint
-        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/auth/google`;
+        // Use the correct better-auth endpoint with redirect
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        window.location.href = `${baseUrl}/api/auth/google?redirect=${encodeURIComponent(redirectTo)}`;
       }
     } catch (error) {
       console.error('Google sign in error:', error);
@@ -44,13 +49,11 @@ export default function SignInPage() {
       {/* Header with logo and login button */}
       <header className="w-full py-4 px-6 flex justify-between items-center">
         <div className="flex items-center">
-          <Image
-            src="/next.svg"
-            alt="ArchiCassoAI"
-            width={40}
-            height={40}
-            className="object-contain"
-          />
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
           <span className="ml-2 text-2xl font-bold text-blue-600">ArchiCassoAI</span>
         </div>
         <Button 
@@ -114,5 +117,12 @@ export default function SignInPage() {
         </p>
       </footer>
     </div>
+  );
+}
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

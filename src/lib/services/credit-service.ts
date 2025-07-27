@@ -1,13 +1,12 @@
 import { db } from '../db';
 import { users, creditTransactions } from '../db/schema';
-import { eq, desc, and, gte, count, sum } from 'drizzle-orm';
+import { eq, desc,  gte, count } from 'drizzle-orm';
 import { 
   FeatureType, 
   SubscriptionStatus, 
   UserCredits, 
   CreditConsumptionRequest,
   CreditConsumptionResponse,
-  CreditTransaction,
   CreditHistory,
   InsufficientCreditsError,
   CreditSystemError,

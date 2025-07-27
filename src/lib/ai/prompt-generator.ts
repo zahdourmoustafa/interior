@@ -131,7 +131,7 @@ The prompt should focus on transforming sketch elements into realistic interior 
     }
 
     try {
-      const systemPrompt = `You are an expert architect and AI prompt engineer. Your task is to create detailed, specific prompts for AI image generation that will produce high-quality, realistic building exterior redesigns.
+      const systemPrompt = `You are an expert architect and AI prompt engineer. Your task is to create detailed, specific prompts for AI image generation that will transform building exterior MATERIALS ONLY while preserving the original structure.
 
 Guidelines:
 - Create prompts that are descriptive and specific to architectural elements.
@@ -145,12 +145,12 @@ Guidelines:
 - Emphasize natural lighting (e.g., "golden hour lighting"), weather, and seasonal context for better visual quality.
 - Include specific design elements that match the chosen style.`;
 
-      const userPrompt = `Create a detailed prompt for generating a ${input.designStyle} style building exterior redesign.
+      const userPrompt = `Create a detailed prompt for transforming a building's exterior materials to ${input.designStyle} style. The prompt must emphasize keeping the EXACT same building structure while only changing materials and colors.
       
 Design Style: ${input.designStyle}
 ${input.additionalContext ? `Additional Context: ${input.additionalContext}` : ''}
 
-The prompt should describe a complete, well-designed building exterior that perfectly showcases the specified style.`;
+The prompt should describe a material transformation that preserves the building's original shape and structure while applying new materials and colors that showcase the specified style.`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4",
@@ -237,18 +237,30 @@ The prompt should describe a complete, well-designed building exterior that perf
 
   private static getFallbackExteriorRedesignPrompt(designStyle: string): string {
     const styleDescriptions = {
-      'scandinavian': 'Scandinavian architectural design with light wood siding, large windows, a neutral color palette, and a focus on natural light and minimalism.',
-      'christmas': 'A building exterior with a Christmas-themed design, featuring festive decorations, warm lighting, snow-covered roof, and a welcoming holiday atmosphere.',
-      'japanese': 'Japanese architectural design with clean lines, natural wood elements, a tile roof, shoji-style windows, and a serene, zen-like garden.',
-      'eclectic': 'An eclectic building exterior that blends different architectural styles, materials, and colors to create a unique and artistic look.',
-      'minimalist': 'A minimalist building exterior with a simple geometric form, a monochromatic color scheme, and a focus on clean lines and uncluttered surfaces.',
-      'futuristic': 'A futuristic building exterior with sleek curves, metallic surfaces, large glass panels, and innovative, high-tech architectural features.',
-      'bohemian': 'A bohemian-style building exterior with warm, earthy colors, natural materials like stucco and wood, and a variety of plants and textures.',
-      'parisian': 'A Parisian-style building with a mansard roof, wrought-iron balconies, and elegant, classic architectural details.'
+      'scandinavian': 'Scandinavian architectural materials: light wood siding, white trim, large energy-efficient windows, neutral colors (whites, light grays, natural wood)',
+      'christmas': 'Christmas exterior styling: festive decorations, warm lighting, holiday wreaths, red and green accents, snow effects',
+      'japanese': 'Japanese architectural materials: natural cedar wood, stone elements, traditional tile roofing, clean horizontal lines',
+      'eclectic': 'Eclectic architectural materials: mixed materials (brick, wood, metal, stone), varied textures, unique color combinations',
+      'minimalist': 'Minimalist architectural materials: concrete, stucco, metal panels, monochromatic colors (whites, grays, blacks)',
+      'futuristic': 'Futuristic architectural materials: metallic surfaces, composite panels, large glass elements, LED lighting accents',
+      'bohemian': 'Bohemian architectural materials: adobe, stucco, natural stone, warm earthy colors, artistic details',
+      'parisian': 'Parisian architectural materials: limestone, brick facade, wrought-iron details, elegant neutral colors'
     };
 
     const styleDesc = styleDescriptions[designStyle as keyof typeof styleDescriptions] || `${designStyle} style architectural design`;
 
-    return `A photorealistic, high-resolution image of a building exterior in a ${styleDesc}. The image should showcase the building's architectural features, materials, and landscaping in a visually appealing way. The lighting should be natural and flattering, and the overall composition should be well-balanced and professional.`;
+    return `MATERIAL TRANSFORMATION ONLY: Transform the building's exterior materials and colors to ${styleDesc}. 
+
+CRITICAL RULES:
+- Keep the EXACT same building shape, size, and proportions
+- Maintain identical roof shape and roofline  
+- Keep all windows in same positions and sizes
+- Keep doors in same positions and sizes
+- Only change: wall materials, roof materials, window frame colors, door colors, trim colors
+- Apply photorealistic textures appropriate to the style
+- Maintain the same camera angle and perspective
+- Result should look like the same building built with different materials
+
+This is a material "re-skin" not a building redesign. The structure must remain identical.`;
   }
 }
